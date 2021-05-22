@@ -17,7 +17,7 @@ This is a c lib to treat xml as a native database. You can access, modify or rep
 
     `Load_db(DB,"sample.html");`
 
-<u> Content of example.html</u>
+<u> Content of sample.html</u>
 
 ```
 <!DOCTYPE html>
@@ -71,14 +71,7 @@ This is document title
 8. Updating node
 
 ```
-	printf("\n### Updating node value ##\n");
-    result =  GetNode(DB, 0, "head/title");
-    for(int i=0;i<result->nodeids.length;i++){
-        UpdateNodevalue(DB, result->nodeids.items[i], "test_new");
-        printf("After updating value\n");
-        printf("\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
-    }
-	printf("\n### Updating node ##\n");
+   printf("\n### Updating node ##\n");
     result = GetNode(DB, 0, "head/title");
     for(int i=0;i<result->nodeids.length;i++){
         struct ResultStruct *newnodes = ReplaceNode(DB, result->nodeids.items[i], "<title>test</title>");
@@ -86,10 +79,20 @@ This is document title
         printf("old node value- %s", GetNodeValue(DB, result->nodeids.items[i])->charbuf); //no output, existing id is removed and new id added
         printf("\nnew node value- %s", GetNodeValue(DB, newnodes->nodeids.items[0])->charbuf);
     }
+    printf("\n### Updating node attribute##\n");
+    result = GetNode(DB, 0, "<x>*[style=\"123\"]/h1");
+    for(int i=0;i<result->nodeids.length;i++){
+        printf("\n%s", GetNodeAttribute(DB, result->nodeids.items[i], "style")->charbuf);
+        UpdateAttributevalue(DB, result->nodeids.items[i], "style", "test2");
+        printf("\nafter updating Attribute-\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
+        UpdateAttributevalue(DB, result->nodeids.items[i], "label", "value");
+        printf("\nafter adding Attribute-\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
+
+    }
 ```
 <u>Output</u>
 ```
-### Updating node value##
+### Updating node ##
 After updation
 Warning :node  doesnot exist
 old node value- 
