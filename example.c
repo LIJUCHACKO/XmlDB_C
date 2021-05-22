@@ -76,7 +76,11 @@ int main()
         printf("\nafter adding Attribute-\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
 
     }
-
+    printf("\n### Recursive Search##\n");
+    result = GetNode(DB, 0, "../h1");
+    for(int i=0;i<result->nodeids.length;i++){
+        printf("\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
+    }
 
     SaveAs_DB(DB, "sample_mod.html" ) ;
     return 0;

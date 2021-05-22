@@ -757,6 +757,7 @@ struct Database* init_Database(int maxNoofLines){
     if (maxNoofLines < 99999) {
         maxNoofLines = 99999;
     }
+    DB->Debug_enabled=false;
     DB->maxInt = maxNoofLines;
     init_VectorInt(&DB->deleted_ids,10);
     init_VectorInt(&DB->nodeNoToLineno, DB->maxInt);/*fixed size*/
