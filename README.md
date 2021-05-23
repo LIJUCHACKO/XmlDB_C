@@ -117,7 +117,32 @@ after adding Attribute-
 
      `result = GetNode(DB, 0, "../h1");`
 
+10. List Functions to be used to free the return pointers.
 
+| Memory deallocation function | Deallocates Return type| Functions that return the structure|
+|------------------------------|------------------------|------------------------------------|
+|free_StringReturn()           | struct String          | GetNodeName()                      |
+|                              |                        | GetNodeContents()                  |
+|                              |                        | GetNodeValue()                     |
+|                              |                        | GetNodeAttribute()                 |
+|------------------------------|------------------------|------------------------------------|                                                        
+|free_ResultStruct()           | struct ResultStruct    | GetNode()                          |
+|                              |                        | UpdateNodevalue()                  |
+|                              |                        | UpdateAttributevalue()             |
+|                              |                        | ReplaceNode()                      |
+|                              |                        | InserSubNode()                     |
+|                              |                        | AppendBeforeNode()                 |
+|                              |                        | AppendAfterNode()                  |
+|------------------------------|------------------------|------------------------------------|
+|free_VectorIntReturn()        | struct VectorInt       | RemoveNode()                       |
+|                              |                        | ChildNodes()                       |
+|------------------------------|------------------------|------------------------------------|
+
+ -Last but not the least don't forget to free Database pointer.
+
+    'free(DB)'
+
+ -I have not used memory dealocation functions in the example inorder to keep the example simple.
 
 ## Working/Software Design
 

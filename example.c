@@ -21,6 +21,7 @@ int main()
     for(int i=0;i<result->nodeids.length;i++){
         printf("\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
     }
+    free_ResultStruct(result);/*Do not forget to free memory if you don't want memory leakage  */
     printf("\n###Getting Value of identified nodes.##");
     result= GetNode(DB, 0, "head/title*");
     for(int i=0;i<result->nodeids.length;i++){
@@ -83,5 +84,6 @@ int main()
     }
 
     SaveAs_DB(DB, "sample_mod.html" ) ;
+    free(DB);
     return 0;
 }
