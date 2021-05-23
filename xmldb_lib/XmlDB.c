@@ -134,7 +134,24 @@ void formatxml(struct StringList* newlines,struct StringList* lines){
         free_String(&linestr);
     }
 }
+void free_DB(struct Database* DB){
+    free_String(&DB->removeattribute);
+    free_String(&DB->path);
 
+    free_hashtable(&DB->pathKeylookup);
+
+    free_VectorInt(&DB->global_ids);
+    free_VectorInt(&DB->deleted_ids);
+    free_VectorInt(&DB->nodeNoToLineno);
+    free_VectorInt(&DB->Nodeendlookup);
+
+    free_StringList(&DB->global_paths);
+    free_StringList(&DB->global_dbLines);
+    free_StringList(&DB->global_values);
+    free_StringList(&DB->global_attributes);
+
+    free(DB);
+}
 void free_compare_path_Result(struct compare_path_Result * v){
     free_StringList(&v->label);
     free_StringList(&v->value);

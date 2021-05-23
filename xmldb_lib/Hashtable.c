@@ -9,6 +9,10 @@ void init_hashtable(struct Hashtable* hashtable ,int size){
 
 
 }
+
+void free_hashtable(struct Hashtable* hashtable){
+    free_VectorInt(hashtable->lists);
+}
 void insertid_intohashtable(struct Hashtable* HashTB,int hashno ,int  nodeId,int reference_linenotoinsert,struct VectorInt *nodeNoToLineno) {
 
     //fmt.Printf("\ninsertid_intohashtable-entry")
