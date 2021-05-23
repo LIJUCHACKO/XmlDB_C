@@ -122,21 +122,21 @@ after adding Attribute-
 | Memory deallocation function | Deallocates Return type| Functions that return the structure|
 |------------------------------|------------------------|------------------------------------|
 |free_StringReturn()           | struct String          | GetNodeName()                      |
-|                              |                        | GetNodeContents()                  |
-|                              |                        | GetNodeValue()                     |
-|                              |                        | GetNodeAttribute()                 |
-|------------------------------|------------------------|------------------------------------|                                                        
+|          "                   |      "                 | GetNodeContents()                  |
+|          "                   |      "                 | GetNodeValue()                     |
+|          "                   |      "                 | GetNodeAttribute()                 |
+|                              |                        |                                    |                                                        
 |free_ResultStruct()           | struct ResultStruct    | GetNode()                          |
-|                              |                        | UpdateNodevalue()                  |
-|                              |                        | UpdateAttributevalue()             |
-|                              |                        | ReplaceNode()                      |
-|                              |                        | InserSubNode()                     |
-|                              |                        | AppendBeforeNode()                 |
-|                              |                        | AppendAfterNode()                  |
-|------------------------------|------------------------|------------------------------------|
+|        "                     |      "                 | UpdateNodevalue()                  |
+|        "                     |      "                 | UpdateAttributevalue()             |
+|        "                     |      "                 | ReplaceNode()                      |
+|        "                     |      "                 | InserSubNode()                     |
+|        "                     |      "                 | AppendBeforeNode()                 |
+|        "                     |      "                 | AppendAfterNode()                  |
+|                              |                        |                                    |
 |free_VectorIntReturn()        | struct VectorInt       | RemoveNode()                       |
-|                              |                        | ChildNodes()                       |
-|------------------------------|------------------------|------------------------------------|
+|         "                    |      "                 | ChildNodes()                       |
+|                              |                        |                                    |
 
  -Last but not the least don't forget to free Database pointer.
 
