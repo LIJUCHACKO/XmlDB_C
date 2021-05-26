@@ -26,7 +26,7 @@ static void readLines(struct String *Lines, char *path) {
             last--;
         }
         line[last+1]='\0';
-        StringCharConcat(Lines,line+from);
+        StringNCharConcat(Lines,line+from,last-from+1);
 
         read = getline(&line, &len, fp);
     }
@@ -778,7 +778,7 @@ struct Database* init_Database(int maxNoofLines){
     DB->maxInt = maxNoofLines;
     init_VectorInt(&DB->deleted_ids,10);
     init_VectorInt(&DB->nodeNoToLineno, DB->maxInt);/*fixed size*/
-    init_hashtable(&DB->pathKeylookup, DB->maxInt);
+    init_hashtable(&DB->pathKeylookup, DB->maxInt);/*fixed size*/
     init_VectorInt(&DB->Nodeendlookup, DB->maxInt);/*fixed size*/
     DB->startindex = -1;
     DB->retainid = -1;
@@ -1120,8 +1120,10 @@ static void remove_Node(struct VectorInt *removedids, struct Database *DB, int n
         struct String path = DB->global_paths.items[startindex];
         struct StringList path_parts;init_StringList(&path_parts,0);
         String_Split(&path_parts,&path, "/");
-        int hashno = stringtono(DB, &path_parts.items[path_parts.length-1]);
-        removeid_fromhashtable(&DB->pathKeylookup, hashno, DB->global_ids.items[startindex],&DB->nodeNoToLineno);
+        if(strcmp(path_parts.items[path_parts.length-1].charbuf,"~")==0){
+            int hashno = stringtono(DB, &path_parts.items[path_parts.length-1]);
+            removeid_fromhashtable(&DB->pathKeylookup, hashno, DB->global_ids.items[startindex],&DB->nodeNoToLineno);
+        }
         removeFrom_StringList(&DB->global_dbLines,startindex);
         //DB.global_dbLines = remove_string(DB.global_dbLines, startindex)
         appendto_VectorInt(&DB->deleted_ids, DB->global_ids.items[startindex]);
@@ -1832,7 +1834,35 @@ struct VectorInt *ChildNodes(struct Database *DB,int nodeId) {
     }
     return ResultIds;
 }
+int NextNode(struct Database *DB,int nodeId) {
+    int LineNo = DB->nodeNoToLineno.items[nodeId];
+    if (LineNo < 0 ){
+        return -1;
+    }
+    struct StringList Nodepathparts;init_StringList(&Nodepathparts,0);
 
+    struct String *NodePath = &DB->global_paths.items[LineNo];
+    String_Split(&Nodepathparts,NodePath, "/");
+    int nodeDepth = Nodepathparts.length;
+
+    int  Node_end = DB->nodeNoToLineno.items[DB->Nodeendlookup.items[nodeId]] + 1;
+    struct String *nextNodePath = &DB->global_paths.items[Node_end];
+    String_Split(&Nodepathparts,nextNodePath, "/");
+    int nextnodeDepth = Nodepathparts.length;
+
+    free_StringList(&Nodepathparts);
+    if(strcmp(Nodepathparts.items[Nodepathparts.length-1].charbuf,"~")==0){
+        return -1;
+    }
+    int nextnodeid=DB->global_ids.items[Node_end];
+
+    if (nodeDepth == nextnodeDepth) {
+        return nextnodeid;
+    } else {
+        return -1;
+    }
+
+}
 struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QUERY_inpch) {
     struct String  QUERY_inp;init_String(&QUERY_inp,0);
     StringCharCpy(&QUERY_inp, QUERY_inpch);

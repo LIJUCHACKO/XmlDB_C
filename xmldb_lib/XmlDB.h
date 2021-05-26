@@ -83,4 +83,5 @@ struct VectorInt *ChildNodes(struct Database *DB,int nodeId) ;
 struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId ,char*  QUERY_inp) ;
 void NodeDebug(struct Database *DB, int nodeId ) ;
 void free_DB(struct Database* DB);
+int NextNode(struct Database *DB,int nodeId);
 #endif
