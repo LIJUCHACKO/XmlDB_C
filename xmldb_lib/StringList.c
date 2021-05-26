@@ -9,11 +9,10 @@ void init_StringList(struct StringList *v,int size){
     v->length=0;
 }
 
-void StringList_Resize(struct StringList *vect,int new_size){
-    if (new_size>vect->size){
+inline void StringList_Resize(struct StringList *vect,int new_size){
         vect->size=new_size;
         vect->items= realloc(vect->items, new_size * sizeof(struct String));
-    }
+
 }
 void free_StringList(struct StringList *vect){
     for(int i=0;i<vect->length;i++){
@@ -82,6 +81,7 @@ void removeFrom_StringList(struct StringList *src_dest,int index){
 }
 
 void String_Split(struct StringList *result ,struct String *string, char* Separator){
+    result->length=0;
     struct String buffer;
     init_String(&buffer,0);
     char *copy = (char *)malloc(string->length + 1);

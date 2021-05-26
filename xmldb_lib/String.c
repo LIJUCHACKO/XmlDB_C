@@ -4,7 +4,7 @@
 void init_String(struct String*v,size_t size){
 
     if(size<1){
-        size=1;
+        size=100;
     }
     v->charbuf = malloc(size * sizeof(char));
     v->charbuf[0]='\0';
@@ -24,10 +24,7 @@ struct String* create_String(char* value){
     return v;
 }
 
-void String_Resize(struct String *vect, size_t new_size){
-    if(new_size<=vect->size){
-        return;
-    }
+inline void String_Resize(struct String *vect, size_t new_size){
      vect->size=new_size;
      vect->charbuf= realloc(vect->charbuf, new_size * sizeof(char));
 
@@ -84,7 +81,16 @@ void StringCharConcat(struct String *dest,char* src){
 
 
 }
+void StringNCharConcat(struct String *dest,char* src, size_t valu_len){
+    //size_t valu_len=strlen(src);
+    if(dest->length+valu_len+1> dest->size){
+        String_Resize( dest ,(dest->length+valu_len)*2);
+    }
+    memcpy(dest->charbuf+dest->length,src,(valu_len+1)*sizeof (char));
+    dest->length=dest->length+valu_len;
 
+
+}
 void StringStringConcat(struct String *dest,struct String* src){
     if((dest->length+src->length+1)> dest->size){
         String_Resize( dest ,(dest->length+src->length)*2);

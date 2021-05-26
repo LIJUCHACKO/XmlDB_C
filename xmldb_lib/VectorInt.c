@@ -10,11 +10,9 @@ void init_VectorInt(struct VectorInt* v,int size){
     v->items[0]=-1;
 }
 
-void VectorInt_Resize(struct VectorInt *vect,int new_size){
-    if (new_size>vect->size){
+inline void VectorInt_Resize(struct VectorInt *vect,int new_size){
         vect->size=new_size;
         vect->items= realloc(vect->items, new_size * sizeof(int));
-    }
 }
 void free_VectorInt(struct VectorInt *vect){
      free(vect->items);

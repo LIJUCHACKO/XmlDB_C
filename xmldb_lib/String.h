@@ -28,4 +28,5 @@ void StringStringConcatpart(struct String *dest, struct String* src, size_t from
 void StringStringCpypart(struct String *dest, struct String* src, size_t from, size_t to);
 void TrimRightString(struct String *src_dest,  size_t size);
 void free_StringReturn(struct String *vect);
+void StringNCharConcat(struct String *dest,char* src, size_t valu_len);
 #endif
