@@ -1,6 +1,6 @@
 #include "StringList.h"
 
-void init_StringList(struct StringList *v,int size){
+void init_StringList(struct StringList *v,size_t size){
     if(size<1){
         size=1;
     }
@@ -9,33 +9,33 @@ void init_StringList(struct StringList *v,int size){
     v->length=0;
 }
 
-inline void StringList_Resize(struct StringList *vect,int new_size){
+inline void StringList_Resize(struct StringList *vect,size_t new_size){
         vect->size=new_size;
         vect->items= realloc(vect->items, new_size * sizeof(struct String));
 
 }
 void free_StringList(struct StringList *vect){
-    for(int i=0;i<vect->length;i++){
+    for(size_t i=0;i<vect->length;i++){
         free_String(&vect->items[i]);
     }
     free(vect->items);
 }
 void free_StringListReturn(struct StringList *vect){
-    for(int i=0;i<vect->length;i++){
+    for(size_t i=0;i<vect->length;i++){
         free_String(&vect->items[i]);
     }
     free(vect->items);
     free(vect);
 }
 void clear_StringList(struct StringList *vect){
-    for(int i=0;i<vect->length;i++){
+    for(size_t i=0;i<vect->length;i++){
         free_String(&vect->items[i]);
     }
     vect->length=0;
 }
 void appendto_StringList(struct StringList *src_dest,struct String *string){
 
-    init_String(&src_dest->items[src_dest->length],0);
+    init_String(&src_dest->items[src_dest->length],string->length);
     StringStringCpy(&src_dest->items[src_dest->length],string);
     src_dest->length++;
 
@@ -44,12 +44,12 @@ void appendto_StringList(struct StringList *src_dest,struct String *string){
     }
 }
 void concatenate_StringList(struct StringList *dest,struct StringList* src){
-    for(int i=0;i<src->length;i++){
+    for(size_t i=0;i<src->length;i++){
         appendto_StringList(dest,&src->items[i]);
     }
 }
 
-void insertInTo_StringList(struct StringList *src_dest,int index,struct String* string){
+void insertInTo_StringList(struct StringList *src_dest,size_t index,struct String* string){
 
     init_String(&src_dest->items[src_dest->length],0);
     struct String* remaining=  malloc((src_dest->length-index) * sizeof(struct String));
@@ -68,7 +68,7 @@ void insertInTo_StringList(struct StringList *src_dest,int index,struct String* 
         }
     }
 }
-void removeFrom_StringList(struct StringList *src_dest,int index){
+void removeFrom_StringList(struct StringList *src_dest,size_t index){
 
     struct String* remaining=  malloc( sizeof(struct String));
     memcpy(remaining, src_dest->items+index, 1*sizeof (struct String));
@@ -81,7 +81,7 @@ void removeFrom_StringList(struct StringList *src_dest,int index){
 }
 
 void String_Split(struct StringList *result ,struct String *string, char* Separator){
-    result->length=0;
+    clear_StringList(result);
     struct String buffer;
     init_String(&buffer,0);
     char *copy = (char *)malloc(string->length + 1);

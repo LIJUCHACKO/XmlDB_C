@@ -1,6 +1,6 @@
 #include "VectorInt.h"
 
-void init_VectorInt(struct VectorInt* v,int size){
+void init_VectorInt(struct VectorInt* v,size_t size){
     if(size<1){
         size=1;
     }
@@ -10,7 +10,7 @@ void init_VectorInt(struct VectorInt* v,int size){
     v->items[0]=-1;
 }
 
-inline void VectorInt_Resize(struct VectorInt *vect,int new_size){
+inline void VectorInt_Resize(struct VectorInt *vect,size_t new_size){
         vect->size=new_size;
         vect->items= realloc(vect->items, new_size * sizeof(int));
 }
@@ -39,14 +39,14 @@ void concatenate_VectorInt(struct VectorInt *dest,struct VectorInt* src){
     memcpy(dest->items+dest->length, src->items, src->length*sizeof (int));
     dest->length=dest->length+src->length;
 }
-void Slice_VectorInt(struct VectorInt *Result,struct VectorInt *input,int from,int to){
+void Slice_VectorInt(struct VectorInt *Result,struct VectorInt *input,size_t from,size_t to){
     if(from<input->length && to<=input->length){
         VectorInt_Resize(Result,to-from+1);
         memcpy(Result->items,input->items+from,(to-from)*sizeof (int));
         Result->length=to-from;
     }
 }
-void inserto_VectorInt(struct VectorInt *src_dest,int index,int value){
+void inserto_VectorInt(struct VectorInt *src_dest,size_t index,int value){
     if(src_dest->length+1>= src_dest->size){
         VectorInt_Resize( src_dest ,(src_dest->size+1)*2);
     }
@@ -57,7 +57,7 @@ void inserto_VectorInt(struct VectorInt *src_dest,int index,int value){
     src_dest->length++;
     free(remaining);
 }
-void removefrom_VectorInt(struct VectorInt *src_dest,int index){
+void removefrom_VectorInt(struct VectorInt *src_dest,size_t index){
 
     int* remaining= malloc((src_dest->length-index-1) * sizeof(int));
     memcpy(remaining, src_dest->items+index+1, (src_dest->length-index-1)*sizeof (int));
