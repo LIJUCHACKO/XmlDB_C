@@ -11,9 +11,9 @@
 #include "String.h"
 #include <ctype.h>
 #include<regex.h>
+#include "SegmentedStringList.h"
 
-
-#define ERRORLENGTH 1000
+#define ERRORLENGTH 2000
 struct ResultStruct {
     struct VectorInt nodeids;
     struct StringList labelvalues;
@@ -34,10 +34,16 @@ struct Database  {
     struct String  removeattribute ;
     struct VectorInt global_ids ;
     struct VectorInt deleted_ids;
-    struct StringList global_paths;
-    struct  StringList global_dbLines;
-    struct StringList global_values;
-    struct StringList global_attributes;
+
+    //struct StringList global_paths;
+    struct SegmentedStringList global_paths;
+   // struct  StringList global_dbLines;
+    struct  SegmentedStringList global_dbLines;
+   // struct StringList global_values;
+    struct SegmentedStringList global_values;
+   // struct StringList global_attributes;
+    struct SegmentedStringList global_attributes;
+
     int global_lineLastUniqueid;
     bool Debug_enabled;
     struct VectorInt nodeNoToLineno;

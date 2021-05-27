@@ -34,9 +34,9 @@ static void readLines(struct String *Lines, char *path) {
 struct VectorInt* Get_common(struct VectorInt* set1 ,struct VectorInt*  set2 )  {
     struct VectorInt* result = malloc(sizeof (struct VectorInt));
     init_VectorInt(result,0);
-    for(int i=0;i<set1->length;i++){
+    for(size_t i=0;i<set1->length;i++){
         int element1=set1->items[i];
-        for(int i=0;i<set2->length;i++){
+        for(size_t i=0;i<set2->length;i++){
             int element2=set2->items[i];
             if (element1 == element2) {
                 appendto_VectorInt(result, element1);
@@ -82,8 +82,8 @@ static bool writeLines(struct Database *DB ,char* path )  {
         return false;
     }
 
-    for(int i=0;i<DB->global_dbLines.length;i++){
-        struct String *line=&DB->global_dbLines.items[i];
+    for(size_t i=0;i<DB->global_dbLines.length;i++){
+        struct String *line=Valueat(&DB->global_dbLines,i);
         struct String buffer;
         init_String(&buffer,10);
         StringStringCpy(&buffer,line);
@@ -101,7 +101,7 @@ static bool writeLines(struct Database *DB ,char* path )  {
 
 void formatxml(struct StringList* newlines,struct StringList* lines){
     int level = 0;
-    for(int i=0;i<lines->length;i++){
+    for(size_t i=0;i<lines->length;i++){
         struct String linestr;init_String(&linestr,10);
         StringStringCpy(&linestr,&lines->items[i]);
         TrimSpaceString(&linestr);
@@ -145,10 +145,14 @@ void free_DB(struct Database* DB){
     free_VectorInt(&DB->nodeNoToLineno);
     free_VectorInt(&DB->Nodeendlookup);
 
-    free_StringList(&DB->global_paths);
-    free_StringList(&DB->global_dbLines);
-    free_StringList(&DB->global_values);
-    free_StringList(&DB->global_attributes);
+    //free_StringList(&DB->global_paths);
+    free_SegmentedStringListReturn(&DB->global_paths);
+    //free_StringList(&DB->global_dbLines);
+    free_SegmentedStringListReturn(&DB->global_dbLines);
+   // free_StringList(&DB->global_values);
+    free_SegmentedStringListReturn(&DB->global_values);
+    //free_StringList(&DB->global_attributes);
+    free_SegmentedStringListReturn(&DB->global_attributes);
 
     free(DB);
 }
@@ -299,7 +303,7 @@ static struct suspectedLinenos_Result *suspectedLinenos(struct Database *DB, str
         free_StringList(&pathParts);
         return Result;//suspectedLineStarts, suspectedLineEnds //1
     } else {
-        for(int i=0;i<NodeNos.length;i++)
+        for(size_t i=0;i<NodeNos.length;i++)
         {
             int node=NodeNos.items[i];
             appendto_VectorInt(&Result->suspectedLineStarts,DB->nodeNoToLineno.items[node]);
@@ -321,7 +325,7 @@ static struct suspectedLinenos_Result *suspectedLinenos(struct Database *DB, str
 }
 static void updateNodenoLineMap(struct Database *DB ,int fromLine ) {
     int lineno = fromLine;
-    while (lineno < DB->global_dbLines.length) {
+    while ((size_t)lineno < DB->global_dbLines.length) {
         int id = DB->global_ids.items[lineno];
         if (id >= 0 ){
             DB->nodeNoToLineno.items[id] = lineno;
@@ -405,10 +409,15 @@ static int fill_DBdata(struct Database *DB, struct String* dbline,struct String*
     int unique_id = DB->global_lineLastUniqueid;
     if (DB->startindex < 0 ){
         //printf("\n%s %s %d %s %s", DB->path, dbline, unique_id, value, attribute)
-        appendto_StringList(&DB->global_dbLines,dbline);
-        appendto_StringList(&DB->global_values,value);
-        appendto_StringList(&DB->global_attributes,attribute);
-        appendto_StringList(&DB->global_paths,&DB->path);
+       // appendto_StringList(&DB->global_dbLines,dbline);
+        appendto_SegmentedStringList(&DB->global_dbLines,dbline);
+        //appendto_StringList(&DB->global_values,value);
+        appendto_SegmentedStringList(&DB->global_values,value);
+        //appendto_StringList(&DB->global_attributes,attribute);
+        appendto_SegmentedStringList(&DB->global_attributes,attribute);
+        //appendto_StringList(&DB->global_paths,&DB->path);
+        appendto_SegmentedStringList(&DB->global_paths,&DB->path);
+
         appendto_VectorInt(&DB->global_ids,unique_id);
 
 
@@ -433,10 +442,10 @@ static int fill_DBdata(struct Database *DB, struct String* dbline,struct String*
                 }
             }
         }
-        insertInTo_StringList(&DB->global_dbLines,DB->startindex,dbline);
-        insertInTo_StringList(&DB->global_values,DB->startindex,value);
-        insertInTo_StringList(&DB->global_attributes,DB->startindex,attribute);
-        insertInTo_StringList(&DB->global_paths,DB->startindex,&DB->path);
+        insertInTo_SegmentedStringList(&DB->global_dbLines,DB->startindex,dbline);
+        insertInTo_SegmentedStringList(&DB->global_values,DB->startindex,value);
+        insertInTo_SegmentedStringList(&DB->global_attributes,DB->startindex,attribute);
+        insertInTo_SegmentedStringList(&DB->global_paths,DB->startindex,&DB->path);
         inserto_VectorInt(&DB->global_ids,DB->startindex,unique_id);
 
         if (DB->Debug_enabled ){
@@ -668,7 +677,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                     struct StringList parts; init_StringList(&parts,0);
                     String_Split(&parts,&buffer2," ");
                     clear_String(&attributebuffer);
-                    for (int partind=0;partind<parts.length;partind++) {
+                    for (size_t partind=0;partind<parts.length;partind++) {
                         struct String *part=&parts.items[partind];
                         TrimSpaceString(part);
                         if (partind > 0){
@@ -722,7 +731,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                         clear_String(&attributebuffer);
                         struct StringList parts; init_StringList(&parts,0);
                         String_Split(&parts,&buffer2," ");
-                        for (int partind=0;partind<parts.length;partind++) {
+                        for (size_t partind=0;partind<parts.length;partind++) {
                             struct String *part=&parts.items[partind];
                             TrimSpaceString(part);
                             if (partind > 0){
@@ -784,10 +793,14 @@ struct Database* init_Database(int maxNoofLines){
     DB->retainid = -1;
     DB->pathIdStack_index = 0;
     init_VectorInt(&DB->global_ids,DB->maxInt);
-    init_StringList(&DB->global_paths, DB->maxInt);
-    init_StringList(&DB->global_attributes,DB->maxInt);
-    init_StringList(&DB->global_values,DB->maxInt);
-    init_StringList(&DB->global_dbLines, DB->maxInt);
+//    init_StringList(&DB->global_paths, DB->maxInt);
+//    init_StringList(&DB->global_attributes,DB->maxInt);
+//    init_StringList(&DB->global_values,DB->maxInt);
+//    init_StringList(&DB->global_dbLines, DB->maxInt);
+    init_SegmentedStringList(&DB->global_paths );
+    init_SegmentedStringList(&DB->global_attributes );
+    init_SegmentedStringList(&DB->global_values );
+    init_SegmentedStringList(&DB->global_dbLines );
     DB->global_lineLastUniqueid = 0;
     init_String(&DB->path,0);
     init_String(&DB->removeattribute,0);
@@ -810,8 +823,8 @@ static void load_xmlstring(struct Database *DB ,struct String* content ) {
     if (DB->Debug_enabled ){
         printf("load_db :xml db loaded\n No of nodes-%d\n", DB->global_lineLastUniqueid);
 
-        for(int i=0;i<DB->global_dbLines.length;i++ ) {
-            char *line=DB->global_dbLines.items[i].charbuf;
+        for(size_t i=0;i<DB->global_dbLines.length;i++ ) {
+            char *line=Valueat(&DB->global_dbLines,i)->charbuf;
             int nodeend = 0;
             int nodebeg = 0;
             if (DB->global_ids.items[i] >= 0) {
@@ -819,8 +832,8 @@ static void load_xmlstring(struct Database *DB ,struct String* content ) {
                 nodeend = DB->nodeNoToLineno.items[DB->Nodeendlookup.items[DB->global_ids.items[i]]] + 1;
             }
 
-            printf("\n path- %s  line- %s  nodeid-%d nodebeg-%d nodeend-%d", DB->global_paths.items[i].charbuf, line, DB->global_ids.items[i], nodebeg, nodeend);
-            printf("\n value- %s attribute-%s", DB->global_values.items[i].charbuf, DB->global_attributes.items[i].charbuf);
+            printf("\n path- %s  line- %s  nodeid-%d nodebeg-%d nodeend-%d", Valueat(&DB->global_paths,i)->charbuf, line, DB->global_ids.items[i], nodebeg, nodeend);
+            printf("\n value- %s attribute-%s", Valueat(&DB->global_values,i)->charbuf, Valueat(&DB->global_attributes,i)->charbuf);
             //printf("\n value- %ld attribute-%ld", DB->global_values->items[i]->length, DB->global_attributes->items[i]->length);
         }
     }
@@ -883,8 +896,8 @@ struct String* GetNodeAttribute(struct Database *DB ,int nodeId ,char* labelchar
         return NULL;
     }
     struct StringList attributes ;init_StringList(&attributes,0);
-    String_Split(&attributes,&DB->global_attributes.items[LineNo], "||");
-    for(int i=0;i<attributes.length;i++){
+    String_Split(&attributes,Valueat(&DB->global_attributes,LineNo), "||");
+    for(size_t i=0;i<attributes.length;i++){
         struct String *attri=&attributes.items[i];
         TrimSpaceString(attri);
         struct StringList LabelValue ; init_StringList(&LabelValue,0);
@@ -913,7 +926,7 @@ struct String *GetNodeValue(struct Database *DB ,int nodeId)  {
         printf("Warning :node  doesnot exist\n");
         return content;
     }
-    StringStringCpy(content,&DB->global_values.items[lineno]);
+    StringStringCpy(content,Valueat(&DB->global_values,lineno));
     return content;
 }
 struct String * GetNodeName(struct Database *DB, int nodeId )  {
@@ -927,7 +940,7 @@ struct String * GetNodeName(struct Database *DB, int nodeId )  {
         return content;
     }
     struct StringList pathparts ;init_StringList(&pathparts,0);
-    String_Split(&pathparts,&DB->global_paths.items[lineno], "/");
+    String_Split(&pathparts,Valueat(&DB->global_paths,lineno), "/");
     StringStringCpy(content,&pathparts.items[pathparts.length-1]);
     free_StringList(&pathparts);
     return content;
@@ -952,13 +965,13 @@ struct String * GetNodeContents(struct Database *DB, int nodeId )  {
         printf("\n No of lines more than 200 \n ");
     }
     for(int i=beginning;i<end_tmp;i++) {
-        appendto_StringList(&lines,&DB->global_dbLines.items[i]);
+        appendto_StringList(&lines,Valueat(&DB->global_dbLines,i));
 
     }
     struct StringList lines2 ;init_StringList(&lines2,0);
     formatxml(&lines2,&lines);
     free_StringList(&lines);
-    for(int i=0;i<lines2.length;i++) {
+    for(size_t i=0;i<lines2.length;i++) {
         StringStringConcat(Output,&lines2.items[i]);
         StringCharConcat(Output,"\n");
 
@@ -991,8 +1004,8 @@ void NodeDebug(struct Database *DB, int nodeId )  {
             nodebeg = DB->nodeNoToLineno.items[DB->global_ids.items[i]];
             nodeend = DB->nodeNoToLineno.items[DB->Nodeendlookup.items[DB->global_ids.items[i]]] + 1;
         }
-        printf("\n path- %s  line- %s  nodeid-%d nodebeg-%d nodeend-%d", DB->global_paths.items[i].charbuf, DB->global_dbLines.items[i].charbuf, DB->global_ids.items[i], nodebeg, nodeend);
-        printf("\n value- %s attribute-%s", DB->global_values.items[i].charbuf, DB->global_attributes.items[i].charbuf);
+        printf("\n path- %s  line- %s  nodeid-%d nodebeg-%d nodeend-%d", Valueat(&DB->global_paths,i)->charbuf, Valueat(&DB->global_dbLines,i)->charbuf, DB->global_ids.items[i], nodebeg, nodeend);
+        printf("\n value- %s attribute-%s", Valueat(&DB->global_values,i)->charbuf, Valueat(&DB->global_attributes,i)->charbuf);
 
     }
 
@@ -1117,14 +1130,14 @@ static void remove_Node(struct VectorInt *removedids, struct Database *DB, int n
     DB->startindex = startindex;
     DB->WriteLock = true;
     for (int i = startindex; i < end; i++ ){
-        struct String path = DB->global_paths.items[startindex];
+        struct String *path = Valueat(&DB->global_paths,startindex);
         struct StringList path_parts;init_StringList(&path_parts,0);
-        String_Split(&path_parts,&path, "/");
-        if(strcmp(path_parts.items[path_parts.length-1].charbuf,"~")==0){
+        String_Split(&path_parts,path, "/");
+        if(strcmp(path_parts.items[path_parts.length-1].charbuf,"~")!=0){
             int hashno = stringtono(DB, &path_parts.items[path_parts.length-1]);
             removeid_fromhashtable(&DB->pathKeylookup, hashno, DB->global_ids.items[startindex],&DB->nodeNoToLineno);
         }
-        removeFrom_StringList(&DB->global_dbLines,startindex);
+        removeFrom_SegmentedStringList(&DB->global_dbLines,startindex);
         //DB.global_dbLines = remove_string(DB.global_dbLines, startindex)
         appendto_VectorInt(&DB->deleted_ids, DB->global_ids.items[startindex]);
         //DB.deleted_ids = append(DB.deleted_ids, DB.global_ids[startindex])
@@ -1133,9 +1146,9 @@ static void remove_Node(struct VectorInt *removedids, struct Database *DB, int n
 
         DB->nodeNoToLineno.items[DB->global_ids.items[startindex]] = -1;
         removefrom_VectorInt(&DB->global_ids, startindex);
-        removeFrom_StringList(&DB->global_paths,startindex);
-        removeFrom_StringList(&DB->global_values,startindex);
-        removeFrom_StringList(&DB->global_attributes,startindex);
+        removeFrom_SegmentedStringList(&DB->global_paths,startindex);
+        removeFrom_SegmentedStringList(&DB->global_values,startindex);
+        removeFrom_SegmentedStringList(&DB->global_attributes,startindex);
         free_StringList(&path_parts);
     }
 
@@ -1155,11 +1168,11 @@ static struct ResultStruct * insertAtLine(struct Database *DB, int lineno,struct
 
     DB->startindex = lineno;
     int startindex_tmp = lineno;
-    struct String  *path_tmp = &DB->global_paths.items[lineno-1];
+    struct String  *path_tmp = Valueat(&DB->global_paths,lineno-1);
     struct String  path;init_String(&path,0);
     StringStringCpy(&path,path_tmp);
 
-    char *pre_line= DB->global_dbLines.items[lineno-1].charbuf;
+    char *pre_line= Valueat(&DB->global_dbLines,lineno-1)->charbuf;
     if (strstr(pre_line, "</")!=NULL || strstr(pre_line, "/>")!=NULL || strstr(pre_line, "<!")!=NULL) {
         struct StringList path_parts ;init_StringList(&path_parts,0);
         String_Split(&path_parts,&path, "/");
@@ -1199,9 +1212,18 @@ static struct ResultStruct * replaceNodeRetainid(struct Database *DB, int nodeId
         init_VectorInt(&ResultSend->nodeids,0);
         init_StringList(&ResultSend->labelvalues,0);
         return ResultSend;
-        //return []int{}, errors.New("xml content is not proper- aborting replacing");
     }
     int startindex = NodeLine(DB, nodeId);
+    if(startindex<0){
+        fprintf(stderr,"\n Node doesnot exist");
+        char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        strcpy(error,"Node doesnot exist");
+        ResultSend->Error=error;
+        init_VectorInt(&ResultSend->nodeids,0);
+        init_StringList(&ResultSend->labelvalues,0);
+        return ResultSend;
+    }
     struct VectorInt removed ;init_VectorInt(&removed,0);
     remove_Node(&removed,DB, nodeId);
     removefrom_VectorInt(&DB->deleted_ids, DB->deleted_ids.length-removed.length);
@@ -1364,7 +1386,7 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     }
     StringCharConcat(contentparts0,">");
     // contentnew := contentparts0 + ">"
-    for(int i=0;i<contentparts.length;i++){
+    for(size_t i=0;i<contentparts.length;i++){
         struct String *part=&contentparts.items[i];
         TrimSpaceString(part);
         if( i > 0 && part->length > 0 ){
@@ -1422,6 +1444,16 @@ struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlch
         return ResultSend;
     }
     int startindex = NodeLine(DB, nodeId);
+    if(startindex<0){
+        fprintf(stderr,"\n Node doesnot exist");
+        char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        strcpy(error,"Node doesnot exist");
+        ResultSend->Error=error;
+        init_VectorInt(&ResultSend->nodeids,0);
+        init_StringList(&ResultSend->labelvalues,0);
+        return ResultSend;
+    }
     struct VectorInt rmids ;init_VectorInt(&rmids,0);
     remove_Node(&rmids,DB, nodeId);
     if (rmids.length > 0) {
@@ -1542,7 +1574,7 @@ int LocateRequireParentdNode(struct Database *DB ,int parent_nodeLine ,struct St
     if (LineNo_inp < 0 || parent_nodeLine < 0 ){
         return -1;
     }
-    struct String *ParentPath = &DB->global_paths.items[parent_nodeLine];
+    struct String *ParentPath = Valueat(&DB->global_paths,parent_nodeLine);
 
     struct suspectedLinenos_Result *suspectedLines= suspectedLinenos(DB, RequiredPath, parent_nodeLine, LineNo_inp+1);
     if (DB->Debug_enabled) {
@@ -1556,7 +1588,7 @@ int LocateRequireParentdNode(struct Database *DB ,int parent_nodeLine ,struct St
     //locate line just above LineNo_inp
     int requiredline = 0;
     //for _, start := range Starts {
-    for(int i=0;i<suspectedLines->suspectedLineStarts.length;i++){
+    for(size_t i=0;i<suspectedLines->suspectedLineStarts.length;i++){
         int start=suspectedLines->suspectedLineStarts.items[i];
         if (start >= parent_nodeLine && start <= LineNo_inp) {
             if (start > requiredline) {
@@ -1564,9 +1596,9 @@ int LocateRequireParentdNode(struct Database *DB ,int parent_nodeLine ,struct St
             }
         }
     }
-    if( DB->global_paths.items[requiredline].length >= ParentPath->length) {
+    if( Valueat(&DB->global_paths,requiredline)->length >= ParentPath->length) {
 
-        struct compare_path_Result *compareresult= compare_path(&DB->global_paths.items[requiredline], RequiredPath);
+        struct compare_path_Result *compareresult= compare_path(Valueat(&DB->global_paths,requiredline), RequiredPath);
 
         if (compareresult->status ){
             if (DB->Debug_enabled) {
@@ -1630,8 +1662,8 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
     }
     bool InsideParent = true;
     struct String QueryPath;init_String(&QueryPath,0);
-    struct String ParentPath=DB->global_paths.items[parent_nodeLine];
-    StringStringCpy(&QueryPath ,&ParentPath );
+    struct String *ParentPath=Valueat(&DB->global_paths,parent_nodeLine);
+    StringStringCpy(&QueryPath ,ParentPath );
     if ( QUERY->length > 0) {
         StringCharConcat(&QueryPath,"/");
         StringStringConcat(&QueryPath,QUERY);
@@ -1645,24 +1677,24 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
     ReplcSubstring(&QueryPath,"*","");
     // QueryPath := strings.ReplaceAll(QUERY, "*", "")
     if (DB->Debug_enabled) {
-        printf("ParentPath- %s\n", ParentPath.charbuf);
+        printf("ParentPath- %s\n", ParentPath->charbuf);
         printf("QueryPATH- %s\n", QueryPath.charbuf);
         printf("Search Value %s\n", RegExp->charbuf);
 
     }
 
     struct suspectedLinenos_Result *suspectedLines= suspectedLinenos(DB, &QueryPath, parent_nodeLine, parent_endline);
-    for(int index=0;index<suspectedLines->suspectedLineStarts.length;index++){
+    for(size_t index=0;index<suspectedLines->suspectedLineStarts.length;index++){
         int start=suspectedLines->suspectedLineStarts.items[index];
         //printf("\nsatrt- %d  %d  %d", start,parent_nodeLine,parent_endline);
         if (start >= parent_nodeLine && start <= parent_endline) {
             int LineNo = start;
-            while (InsideParent && LineNo < DB->global_dbLines.length && LineNo <= suspectedLines->suspectedLineEnds.items[index]) {
+            while (InsideParent && (size_t)LineNo < DB->global_dbLines.length && LineNo <= suspectedLines->suspectedLineEnds.items[index]) {
                 //printf("\nDB.global_paths[LineNo] %s ParentPath %s\n", DB.global_paths[LineNo], ParentPath)
-                if (isParentPath(&ParentPath, &DB->global_paths.items[LineNo])) {
-                    struct compare_path_Result *compare_result= compare_path(&DB->global_paths.items[LineNo], &QueryPath);
+                if (isParentPath(ParentPath, Valueat(&DB->global_paths,LineNo))) {
+                    struct compare_path_Result *compare_result= compare_path(Valueat(&DB->global_paths,LineNo), &QueryPath);
                     struct String labelValueStr;init_String(&labelValueStr,0);
-                    for(int index2=0;index2<compare_result->label.length;index2++){
+                    for(size_t index2=0;index2<compare_result->label.length;index2++){
                         StringStringConcat(&labelValueStr,&compare_result->label.items[index2]);
                         StringCharConcat(&labelValueStr,"=");
                         StringStringConcat(&labelValueStr,&compare_result->value.items[index2]);
@@ -1681,13 +1713,13 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
                             struct StringList values_attributes ;init_StringList(&values_attributes,0);
                             String_Split(&values_attributes,RegExp, ";");
                             bool all_satisfied = true;
-                            for(int j=0;j<values_attributes.length;j++){
+                            for(size_t j=0;j<values_attributes.length;j++){
                                 struct String *valueorAttribute=&values_attributes.items[j];
                                 TrimSpaceString(valueorAttribute);
                                 if (valueorAttribute->length > 0 ){
 
                                     if (strstr(RegExp->charbuf, "=\"")!=NULL) {
-                                        struct String *global_Attribute=&DB->global_attributes.items[LineNo];/*don't free*/
+                                        struct String *global_Attribute=Valueat(&DB->global_attributes,LineNo);/*don't free*/
                                         //printf("global_Attribute_trimmed-%ld",strlen(global_Attribute_trimmed->charbuf));
                                         // fflush(stdout);
                                         TrimSpaceString(global_Attribute);
@@ -1697,7 +1729,7 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
                                             struct StringList attributes ;init_StringList(&attributes,0);
                                             String_Split(&attributes,global_Attribute, "||");
                                             bool attrib_matching = false;
-                                            for(int k=0;k<attributes.length;k++){
+                                            for(size_t k=0;k<attributes.length;k++){
                                                 struct String *attrib =&attributes.items[k];
                                                 TrimSpaceString(attrib);
                                                 if (attrib->length > 0) {
@@ -1726,11 +1758,11 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
 
                                         bool match = false;
                                         if (isRegExp) {
-                                            match= Regular_expmatch(DB->global_values.items[LineNo].charbuf,valueorAttribute->charbuf);
+                                            match= Regular_expmatch(Valueat(&DB->global_values,LineNo)->charbuf,valueorAttribute->charbuf);
                                         } else {
                                             struct String valueorAttributeRe ;init_String(&valueorAttributeRe,0);
                                             ReplacewithHTMLSpecialEntities(&valueorAttributeRe,valueorAttribute);
-                                            match = (strcmp(valueorAttributeRe.charbuf , DB->global_values.items[LineNo].charbuf)==0);
+                                            match = (strcmp(valueorAttributeRe.charbuf , Valueat(&DB->global_values,LineNo)->charbuf)==0);
                                             free_String(&valueorAttributeRe);
                                         }
                                         if (!match) {
@@ -1782,7 +1814,7 @@ int ParentNode(struct Database *DB,int nodeId)  {
     if (LineNo < 0) {
         return ResultId;
     }
-    struct String *NodePath = &DB->global_paths.items[LineNo];
+    struct String *NodePath = Valueat(&DB->global_paths,LineNo);
     struct StringList parts;init_StringList(&parts,0);
     String_Split(&parts,NodePath, "/");
 
@@ -1804,16 +1836,16 @@ struct VectorInt *ChildNodes(struct Database *DB,int nodeId) {
     if (LineNo < 0) {
         return ResultIds;
     }
-    struct String *NodePath = &DB->global_paths.items[LineNo];
+    struct String *NodePath = Valueat(&DB->global_paths,LineNo);
     struct StringList Nodepathparts;init_StringList(&Nodepathparts,0);
     String_Split(&Nodepathparts,NodePath, "/");
-    int nodeDepth = Nodepathparts.length;
+    size_t nodeDepth = Nodepathparts.length;
     free_StringList(&Nodepathparts);
     int  Node_end = DB->nodeNoToLineno.items[DB->Nodeendlookup.items[nodeId]] + 1;
     bool InsideParent = true;
     LineNo++;
     while( InsideParent && (LineNo < Node_end)) {
-        struct String *path=&DB->global_paths.items[LineNo];
+        struct String *path=Valueat(&DB->global_paths,LineNo);
         if (isParentPath(NodePath, path)) {
 
             if ((path->charbuf[ path->length-2] == '/') && (path->charbuf[ path->length-1] =='~')) {
@@ -1841,12 +1873,13 @@ int NextNode(struct Database *DB,int nodeId) {
     }
     struct StringList Nodepathparts;init_StringList(&Nodepathparts,0);
 
-    struct String *NodePath = &DB->global_paths.items[LineNo];
+    struct String *NodePath = Valueat(&DB->global_paths,LineNo);
     String_Split(&Nodepathparts,NodePath, "/");
     int nodeDepth = Nodepathparts.length;
 
     int  Node_end = DB->nodeNoToLineno.items[DB->Nodeendlookup.items[nodeId]] + 1;
-    struct String *nextNodePath = &DB->global_paths.items[Node_end];
+    struct String *nextNodePath = Valueat(&DB->global_paths,Node_end);
+
     String_Split(&Nodepathparts,nextNodePath, "/");
     int nextnodeDepth = Nodepathparts.length;
 
@@ -1891,7 +1924,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     struct String RequiredPath_final;init_String(&RequiredPath_final,0);
     struct StringList req_parts ;init_StringList(&req_parts,0);
     String_Split(&req_parts,&RequiredPath, "]");
-    for(int i=0;i<req_parts.length;i++){
+    for(size_t i=0;i<req_parts.length;i++){
         struct StringList  String_Value ;init_StringList(&String_Value,0);
         String_Split(&String_Value,&req_parts.items[i], "[");
         StringStringConcat(&RequiredPath_final , &String_Value.items[0]);
@@ -1902,7 +1935,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     struct String finalPath;init_String(&finalPath,0);
     struct StringList finalPath_parts ;init_StringList(&finalPath_parts,0);
     String_Split(&finalPath_parts,&QUERY_inp, "]");
-    for(int i=0;i<finalPath_parts.length;i++){
+    for(size_t i=0;i<finalPath_parts.length;i++){
         struct StringList   String_Value ;init_StringList(&String_Value,0);
         String_Split(&String_Value,&finalPath_parts.items[i], "[");
         StringStringConcat(&finalPath , &String_Value.items[0]);
@@ -1936,7 +1969,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     struct VectorInt   nextnodesLineNo ;init_VectorInt(&nextnodesLineNo,0);
     struct StringList  nextlabels ;init_StringList(&nextlabels,0);
 
-    for(int i=0;i<parts.length;i++){
+    for(size_t i=0;i<parts.length;i++){
         struct String *part=&parts.items[i];
         struct StringList  String_Value ;init_StringList(&String_Value,0);
         String_Split(&String_Value,part, "[");
@@ -1952,7 +1985,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
             clear_StringList(&nextlabels);
             clear_VectorInt(&nextnodesLineNo);
             //for ind, node := range final_nodesLineNo {
-            for(int ind=0;ind<final_nodesLineNo.length;ind++){
+            for(size_t ind=0;ind<final_nodesLineNo.length;ind++){
                 int node=final_nodesLineNo.items[ind];
                 bool onlypath = true;
                 if (RegExp.length > 0) {
@@ -1975,7 +2008,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
                 struct  ResultStruct *NodeLocated= locateNodeLine(DB, node, &QUERYSTR, &RegExp, onlypath, isRegExp);
 
                 //for i, label := range labels {
-                for(int i=0;i<NodeLocated->labelvalues.length;i++){
+                for(size_t i=0;i<NodeLocated->labelvalues.length;i++){
                     struct String *label=&NodeLocated->labelvalues.items[i];
                     StringStringCpy(&tmp,label);
                     StringStringConcat(&tmp,&ResultSend->labelvalues.items[ind]);
@@ -2003,7 +2036,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     free_StringList(&nextlabels);
     free_StringList(&parts);
     //struct VectorInt *ResultIds = init_VectorInt(0);
-    for(int index=0;index<ResultSend->labelvalues.length;index++){
+    for(size_t index=0;index<ResultSend->labelvalues.length;index++){
         struct String *label_res=&ResultSend->labelvalues.items[index];
         int nodeLine = final_nodesLineNo.items[index];
         if (nodeLine >= 0) {
@@ -2012,7 +2045,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
             //printf("ProcessQuery :label_res %s\n", label_res)
             struct StringList  entries ;init_StringList(&entries,0);
             String_Split(&entries,label_res, ";");
-            for(int k=0;k<entries.length;k++){
+            for(size_t k=0;k<entries.length;k++){
                 struct String *entry=&entries.items[k];
                 struct StringList parts ;init_StringList(&parts,0);
                 String_Split(&parts,entry, "=");
@@ -2025,7 +2058,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
             }
             free_StringList(&entries);
             //printf("ProcessQuery :parent_nodeLine %s\n", DB.global_paths[parent_nodeLine]+"/"+RequiredPathN)
-            StringStringCpy(&tmp,&DB->global_paths.items[parent_nodeLine]);
+            StringStringCpy(&tmp,Valueat(&DB->global_paths,parent_nodeLine));
             StringCharConcat(&tmp,"/");
             StringStringConcat(&tmp,&RequiredPathN);
             int ResultId = LocateRequireParentdNode(DB, parent_nodeLine, &tmp, nodeLine);
