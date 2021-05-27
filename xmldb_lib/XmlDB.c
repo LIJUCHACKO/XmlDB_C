@@ -145,14 +145,10 @@ void free_DB(struct Database* DB){
     free_VectorInt(&DB->nodeNoToLineno);
     free_VectorInt(&DB->Nodeendlookup);
 
-    //free_StringList(&DB->global_paths);
-    free_SegmentedStringListReturn(&DB->global_paths);
-    //free_StringList(&DB->global_dbLines);
-    free_SegmentedStringListReturn(&DB->global_dbLines);
-   // free_StringList(&DB->global_values);
-    free_SegmentedStringListReturn(&DB->global_values);
-    //free_StringList(&DB->global_attributes);
-    free_SegmentedStringListReturn(&DB->global_attributes);
+    free_SegmentedStringList(&DB->global_paths);
+    free_SegmentedStringList(&DB->global_dbLines);
+    free_SegmentedStringList(&DB->global_values);
+    free_SegmentedStringList(&DB->global_attributes);
 
     free(DB);
 }
@@ -307,15 +303,12 @@ static struct suspectedLinenos_Result *suspectedLinenos(struct Database *DB, str
         {
             int node=NodeNos.items[i];
             appendto_VectorInt(&Result->suspectedLineStarts,DB->nodeNoToLineno.items[node]);
-            //suspectedLineStarts = append(suspectedLineStarts, DB->nodeNoToLineno[node])
             //printf("\n DB->nodeNoToLineno[node] %d ", DB->nodeNoToLineno[node])
             if (SearchtillEnd == 1) {
                 appendto_VectorInt(&Result->suspectedLineEnds,DB->nodeNoToLineno.items[DB->Nodeendlookup.items[node]]+1);
-                //suspectedLineEnds = append(suspectedLineEnds, DB->nodeNoToLineno[DB->Nodeendlookup[node]]+1)
                 //printf("\n DB->suspectedLineEnds[i] %d ", DB->suspectedLineEnds[i])
             } else {
                 appendto_VectorInt(&Result->suspectedLineEnds,DB->nodeNoToLineno.items[node]);
-                //suspectedLineEnds = append(suspectedLineEnds, DB->nodeNoToLineno[node])
             }
         }
     }
@@ -409,13 +402,9 @@ static int fill_DBdata(struct Database *DB, struct String* dbline,struct String*
     int unique_id = DB->global_lineLastUniqueid;
     if (DB->startindex < 0 ){
         //printf("\n%s %s %d %s %s", DB->path, dbline, unique_id, value, attribute)
-       // appendto_StringList(&DB->global_dbLines,dbline);
         appendto_SegmentedStringList(&DB->global_dbLines,dbline);
-        //appendto_StringList(&DB->global_values,value);
         appendto_SegmentedStringList(&DB->global_values,value);
-        //appendto_StringList(&DB->global_attributes,attribute);
         appendto_SegmentedStringList(&DB->global_attributes,attribute);
-        //appendto_StringList(&DB->global_paths,&DB->path);
         appendto_SegmentedStringList(&DB->global_paths,&DB->path);
 
         appendto_VectorInt(&DB->global_ids,unique_id);
@@ -793,10 +782,6 @@ struct Database* init_Database(int maxNoofLines){
     DB->retainid = -1;
     DB->pathIdStack_index = 0;
     init_VectorInt(&DB->global_ids,DB->maxInt);
-//    init_StringList(&DB->global_paths, DB->maxInt);
-//    init_StringList(&DB->global_attributes,DB->maxInt);
-//    init_StringList(&DB->global_values,DB->maxInt);
-//    init_StringList(&DB->global_dbLines, DB->maxInt);
     init_SegmentedStringList(&DB->global_paths );
     init_SegmentedStringList(&DB->global_attributes );
     init_SegmentedStringList(&DB->global_values );
@@ -859,7 +844,6 @@ bool Save_DB(struct Database *DB) {
         fprintf(stderr,"Filename not specified\n");
         return false;
     }
-    //lines := formatxml(DB.global_dbLines)
     bool status= writeLines(DB, DB->filename);
     if (!status) {
         fprintf(stderr,"Cannot save db  : %s\n", DB->filename);
@@ -915,8 +899,6 @@ struct String* GetNodeAttribute(struct Database *DB ,int nodeId ,char* labelchar
     return content;
 }
 struct String *GetNodeValue(struct Database *DB ,int nodeId)  {
-    //char* content= (char*) malloc((LINELENGTH) * sizeof(char));
-    //content[0]='\0';
     struct String* content=malloc(sizeof (struct String));init_String(content,0);
     while( DB->WriteLock) {
         printf("Waiting for WriteLock-GetNodeValue\n");
@@ -1138,12 +1120,9 @@ static void remove_Node(struct VectorInt *removedids, struct Database *DB, int n
             removeid_fromhashtable(&DB->pathKeylookup, hashno, DB->global_ids.items[startindex],&DB->nodeNoToLineno);
         }
         removeFrom_SegmentedStringList(&DB->global_dbLines,startindex);
-        //DB.global_dbLines = remove_string(DB.global_dbLines, startindex)
         appendto_VectorInt(&DB->deleted_ids, DB->global_ids.items[startindex]);
-        //DB.deleted_ids = append(DB.deleted_ids, DB.global_ids[startindex])
         appendto_VectorInt(removedids, DB->global_ids.items[startindex]);
-        //removedids = append(removedids, DB.global_ids[startindex])
-
+        
         DB->nodeNoToLineno.items[DB->global_ids.items[startindex]] = -1;
         removefrom_VectorInt(&DB->global_ids, startindex);
         removeFrom_SegmentedStringList(&DB->global_paths,startindex);
@@ -1177,7 +1156,6 @@ static struct ResultStruct * insertAtLine(struct Database *DB, int lineno,struct
         struct StringList path_parts ;init_StringList(&path_parts,0);
         String_Split(&path_parts,&path, "/");
         TrimRightString(&path,path_parts.items[path_parts.length-1].length+1);
-        //path[strlen(path)-strlen(path_parts->items[path_parts->length-1])-1]='\0';
         free_StringList(&path_parts);
     }
     StringStringCpy(&DB->path, &path);
@@ -1227,7 +1205,6 @@ static struct ResultStruct * replaceNodeRetainid(struct Database *DB, int nodeId
     struct VectorInt removed ;init_VectorInt(&removed,0);
     remove_Node(&removed,DB, nodeId);
     removefrom_VectorInt(&DB->deleted_ids, DB->deleted_ids.length-removed.length);
-    // DB.deleted_ids = remove(DB.deleted_ids, len(DB.deleted_ids)-len(removed))
     struct ResultStruct* ResultSend=  insertAtLine(DB, startindex, sub_xml, removed.items[0]);
     free_VectorInt(&removed);
     return ResultSend;
@@ -1269,7 +1246,6 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
             struct String *nodename=GetNodeName(DB, nodeId);
             StringStringConcat(&result,nodename);
             StringCharConcat(&result,">" );
-            //result = parts[0] + ">" + new_value + "</" + GetNodeName(DB, nodeId) + ">"
             free_StringReturn(nodename);
             free_StringList(&parts);
         }
@@ -1287,7 +1263,6 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
             StringStringConcat(&result,&part1parts.items[1]);
             StringCharConcat(&result,">" );
 
-            // result = parts[0] + ">" + new_value + "<" + part1parts[1] + ">"
             free_StringList(&part1parts);
         }
         free_StringList(&parts);
@@ -1378,21 +1353,17 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
         }
         ReplcSubstring(contentparts0,oldlabelvalue.charbuf,newlabelvalue.charbuf);
         free_StringReturn(oldvalue);
-        //contentparts0 = strings.ReplaceAll(contentparts0, label+"=\""+oldvalue+"\"", label+"=\""+value+"\"")
     } else {
         StringCharConcat(contentparts0," ");
         StringStringConcat(contentparts0,&newlabelvalue);
-        //contentparts0 = (contentparts0 + " " + label + "=\"" + value + "\"")
     }
     StringCharConcat(contentparts0,">");
-    // contentnew := contentparts0 + ">"
     for(size_t i=0;i<contentparts.length;i++){
         struct String *part=&contentparts.items[i];
         TrimSpaceString(part);
         if( i > 0 && part->length > 0 ){
             StringStringConcat(contentparts0,part);
             StringCharConcat(contentparts0,">");
-            // contentnew = contentnew + part + ">"
         }
     }
     //printf("newcontents-%s",contentparts0.charbuf);
@@ -1667,7 +1638,6 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
     if ( QUERY->length > 0) {
         StringCharConcat(&QueryPath,"/");
         StringStringConcat(&QueryPath,QUERY);
-        //QUERY = ParentPath + "/" + QUERY
     }
 
     if (DB->Debug_enabled) {
@@ -1675,7 +1645,6 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
         printf("QUERY- %s\n", QUERY->charbuf);
     }
     ReplcSubstring(&QueryPath,"*","");
-    // QueryPath := strings.ReplaceAll(QUERY, "*", "")
     if (DB->Debug_enabled) {
         printf("ParentPath- %s\n", ParentPath->charbuf);
         printf("QueryPATH- %s\n", QueryPath.charbuf);
@@ -1958,7 +1927,6 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     struct VectorInt  final_nodesLineNo;init_VectorInt(&final_nodesLineNo,0);
     int parent_nodeLine = NodeLine(DB, parent_nodeId);
     if (parent_nodeLine < 0) {
-        //ResultSend->labelvalues=labels_result;
         return ResultSend;
     }
     appendto_VectorInt(&final_nodesLineNo, parent_nodeLine);
@@ -2051,8 +2019,6 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
                 String_Split(&parts,entry, "=");
                 if (parts.items[0].length > 0 ){
                     ReplcSubstring(&RequiredPathN, parts.items[0].charbuf, parts.items[1].charbuf);
-                    //RequiredPathN = strings.ReplaceAll(RequiredPathN, parts[0], parts[1])
-                    //printf("ProcessQuery : %s  %s\n", parts[0], parts[1])
                 }
                 free_StringList(&parts);
             }
@@ -2073,8 +2039,6 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
 
     }
     free_VectorInt(&final_nodesLineNo);
-    //ResultSend->nodeids=ResultIds;
-    //ResultSend->labelvalues=labels_result;
     free_String(&tmp);
     free_String(&RequiredPath);
     free_String(&RequiredPath_final);
