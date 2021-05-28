@@ -48,14 +48,12 @@ void insertInTo_SegmentedStringList(struct SegmentedStringList *vect,size_t inde
             insertInTo_StringList(&vect->Segments[i], index-size,  string);
             if (vect->Segments[i].length>=2*SEGMENTLENGTH){
                 /*dividing into 2*/
-                increase_Segments(vect);
-                struct StringList* remaining=  malloc((vect->lastSegment-i-1) * sizeof(struct StringList));
-                memcpy(remaining, vect->Segments+i+1, (vect->lastSegment-i-1)*sizeof (struct StringList));
-                vect->Segments[i+1].size=vect->Segments[vect->lastSegment].size;
-                vect->Segments[i+1].length=vect->Segments[vect->lastSegment].length;
-                vect->Segments[i+1].items=vect->Segments[vect->lastSegment].items;
-                memcpy( vect->Segments+index+2,remaining, (vect->lastSegment-i-1)*sizeof (struct StringList));
-                free(remaining);
+                vect->lastSegment++;
+                if(vect->lastSegment>= vect->NoofSegments){
+                      SegmentedStringList_Resize( vect ,vect->NoofSegments*2);
+                }
+                memmove(vect->Segments+index+2, vect->Segments+i+1,(vect->lastSegment-i-1)*sizeof (struct StringList));
+                init_StringList(&vect->Segments[i+1],SEGMENTLENGTH);
                 /*copying last half contents to next i+1 from i*/
                 memmove(vect->Segments[i+1].items,vect->Segments[i].items+SEGMENTLENGTH,SEGMENTLENGTH*sizeof (struct String));
                 vect->Segments[i].length=SEGMENTLENGTH;
@@ -87,6 +85,7 @@ struct String * Valueat(struct SegmentedStringList *vect,size_t index){
     size_t i=0;
     while(i<= vect->lastSegment){
         if((size+vect->Segments[i].length) >index){
+           // printf("\nSegments[%ld][%ld]",i,index-size);
             return &vect->Segments[i].items[index-size];
         }
         size=size+vect->Segments[i].length;

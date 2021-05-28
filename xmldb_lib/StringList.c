@@ -35,7 +35,7 @@ void clear_StringList(struct StringList *vect){
 }
 void appendto_StringList(struct StringList *src_dest,struct String *string){
 
-    init_String(&src_dest->items[src_dest->length],string->length);
+    init_String(&src_dest->items[src_dest->length],string->length+1);
     StringStringCpy(&src_dest->items[src_dest->length],string);
     src_dest->length++;
 
@@ -50,15 +50,9 @@ void concatenate_StringList(struct StringList *dest,struct StringList* src){
 }
 
 void insertInTo_StringList(struct StringList *src_dest,size_t index,struct String* string){
-
-    init_String(&src_dest->items[src_dest->length],0);
-    struct String* remaining=  malloc((src_dest->length-index) * sizeof(struct String));
-    memcpy(remaining, src_dest->items+index, (src_dest->length-index)*sizeof (struct String));
-    src_dest->items[index].charbuf = src_dest->items[src_dest->length].charbuf;
-    src_dest->items[index].size=src_dest->items[src_dest->length].size;
-    StringStringCpy(&src_dest->items[index],string);
-    memcpy( src_dest->items+index+1,remaining, (src_dest->length-index)*sizeof (struct String));
-    free(remaining);
+      memmove(src_dest->items+index+1,src_dest->items+index,(src_dest->length-index)*sizeof (struct String));
+      init_String(&src_dest->items[index],string->length+1);
+       StringStringCpy(&src_dest->items[index],string);
     src_dest->length++;
     if(src_dest->length>= src_dest->size){
         if(src_dest->size<1000){
@@ -70,12 +64,9 @@ void insertInTo_StringList(struct StringList *src_dest,size_t index,struct Strin
 }
 void removeFrom_StringList(struct StringList *src_dest,size_t index){
 
-    struct String* remaining=  malloc( sizeof(struct String));
-    memcpy(remaining, src_dest->items+index, 1*sizeof (struct String));
-
+    struct String* remaining=  malloc( sizeof(struct String)); 
+    free_String(&src_dest->items[index]);
     memmove( src_dest->items+index,src_dest->items+index+1, (src_dest->length-index-1)*sizeof (struct String));
-    memcpy(src_dest->items+src_dest->length, remaining, 1*sizeof (struct String));
-    free_String(&src_dest->items[src_dest->length]);
     src_dest->length--;
     free(remaining);
 }
