@@ -63,12 +63,9 @@ void insertInTo_StringList(struct StringList *src_dest,size_t index,struct Strin
     }
 }
 void removeFrom_StringList(struct StringList *src_dest,size_t index){
-
-    struct String* remaining=  malloc( sizeof(struct String)); 
     free_String(&src_dest->items[index]);
     memmove( src_dest->items+index,src_dest->items+index+1, (src_dest->length-index-1)*sizeof (struct String));
     src_dest->length--;
-    free(remaining);
 }
 
 void String_Split(struct StringList *result ,struct String *string, char* Separator){
