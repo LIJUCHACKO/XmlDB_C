@@ -81,19 +81,22 @@ static bool writeLines(struct Database *DB ,char* path )  {
         printf("\nCannot open file %s",path);
         return false;
     }
-
-    for(size_t i=0;i<DB->global_dbLines.length;i++){
-        struct String *line=Valueat(&DB->global_dbLines,i);
-        struct String buffer;
-        init_String(&buffer,10);
-        StringStringCpy(&buffer,line);
-        //line = strings.ReplaceAll(line, "<nil:node>", "")
-        ReplcSubstring(&buffer,"<nil:node>","");
-        //line = strings.ReplaceAll(line, "</nil:node>", "")
-        ReplcSubstring(&buffer,"</nil:node>","");
-        fprintf(fp,"%s\n",buffer.charbuf);
-        free_String(&buffer);
+    struct String buffer;
+    init_String(&buffer,10);
+    size_t seg=0;
+    while(seg<= DB->global_dbLines.lastSegment){
+        for(size_t i=0;i<DB->global_dbLines.Segments[seg].length;i++){
+            struct String *line=&DB->global_dbLines.Segments[seg].items[i];
+            clear_String(&buffer);
+            StringStringCpy(&buffer,line);
+            ReplcSubstring(&buffer,"<nil:node>","");
+            ReplcSubstring(&buffer,"</nil:node>","");
+            StringCharConcat(&buffer,"\n");
+            fwrite(buffer.charbuf , sizeof(char) , buffer.length , fp );
+        }
+        seg++;
     }
+    free_String(&buffer);
     fclose(fp);
     return true;
 }
@@ -573,7 +576,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                                 appendto_VectorInt(nodes,node);
                             }
                             ////
-                            
+
                         }
                         lastindex = index;
                     }
@@ -1122,7 +1125,7 @@ static void remove_Node(struct VectorInt *removedids, struct Database *DB, int n
         removeFrom_SegmentedStringList(&DB->global_dbLines,startindex);
         appendto_VectorInt(&DB->deleted_ids, DB->global_ids.items[startindex]);
         appendto_VectorInt(removedids, DB->global_ids.items[startindex]);
-        
+
         DB->nodeNoToLineno.items[DB->global_ids.items[startindex]] = -1;
         removefrom_VectorInt(&DB->global_ids, startindex);
         removeFrom_SegmentedStringList(&DB->global_paths,startindex);
