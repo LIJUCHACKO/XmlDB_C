@@ -81,15 +81,12 @@ void StringCharConcat(struct String *dest,char* src){
 
 
 }
-void StringNCharConcat(struct String *dest,char* src, size_t valu_len){
-    //size_t valu_len=strlen(src);
+inline void StringNCharConcat(struct String *dest,char* src, size_t valu_len){
     if(dest->length+valu_len+1> dest->size){
         String_Resize( dest ,(dest->length+valu_len)*2);
     }
-    memcpy(dest->charbuf+dest->length,src,(valu_len+1)*sizeof (char));
+    memcpy(dest->charbuf+dest->length,src,(valu_len)*sizeof (char));
     dest->length=dest->length+valu_len;
-
-
 }
 void StringStringConcat(struct String *dest,struct String* src){
     if((dest->length+src->length+1)> dest->size){
@@ -113,11 +110,16 @@ void Sub_String(struct String *dest,struct String *src, size_t from, size_t to){
     if((to-from+1)> dest->size){
         String_Resize( dest ,((to-from)*2));
     }
-    if(from<src->length && to<=src->length){
-        memcpy(dest->charbuf,src->charbuf+from,(to-from)*sizeof (char));
-        dest->length=to-from;
-        dest->charbuf[dest->length]='\0';
+
+    if(from>src->length){
+        return;
     }
+    if(to>src->length){
+        to=src->length;
+    }
+    memcpy(dest->charbuf,src->charbuf+from,(to-from)*sizeof (char));
+    dest->length=to-from;
+    dest->charbuf[dest->length]='\0';
 }
 
 void ReplcSubstring(struct String *src_dest,char *SubString,char* NewString){
