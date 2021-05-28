@@ -45,7 +45,7 @@ void clear_String(struct String *vect){
 void StringCharCpy(struct String *v,char* value){
     size_t valu_len=strlen(value);
     if(valu_len+1> v->size){
-        String_Resize( v ,(valu_len*2)+1);
+        String_Resize( v ,(valu_len)+1);
     }
     memcpy(v->charbuf,value,(valu_len+1)*sizeof (char));
     v->length=valu_len;
@@ -55,7 +55,7 @@ void StringCharCpy(struct String *v,char* value){
 
 void StringStringCpy(struct String *dest,struct String* src){
     if((src->length+1)> dest->size){
-        String_Resize( dest ,(src->length*2));
+        String_Resize( dest ,(src->length+1));
     }
     memcpy(dest->charbuf, src->charbuf, (src->length+1)*sizeof (char));
     dest->length=src->length;
