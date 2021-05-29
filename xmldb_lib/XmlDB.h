@@ -86,4 +86,5 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId ,char*  QUE
 void NodeDebug(struct Database *DB, int nodeId ) ;
 void free_DB(struct Database* DB);
 int NextNode(struct Database *DB,int nodeId);
+struct String *Dump_DB(struct Database *DB);
 #endif

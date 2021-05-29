@@ -100,7 +100,26 @@ static bool writeLines(struct Database *DB ,char* path )  {
     fclose(fp);
     return true;
 }
-
+struct String *Dump_DB(struct Database *DB){
+    struct String *content=malloc(sizeof (struct String));init_String(content,0);
+    struct String buffer;
+    init_String(&buffer,10);
+    size_t seg=0;
+    while(seg<= DB->global_dbLines.lastSegment){
+        for(size_t i=0;i<DB->global_dbLines.Segments[seg].length;i++){
+            struct String *line=&DB->global_dbLines.Segments[seg].items[i];
+            clear_String(&buffer);
+            StringStringCpy(&buffer,line);
+            ReplcSubstring(&buffer,"<nil:node>","");
+            ReplcSubstring(&buffer,"</nil:node>","");
+            StringCharConcat(&buffer,"\n");
+            StringStringConcat(content,&buffer);
+        }
+        seg++;
+    }
+    free_String(&buffer);
+    return content;
+}
 
 void formatxml(struct StringList* newlines,struct StringList* lines){
     int level = 0;
