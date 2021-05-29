@@ -79,7 +79,6 @@ struct ResultStruct * AppendBeforeNode(struct Database *DB, int nodeId, char *su
 int LocateRequireParentdNode(struct Database *DB ,int parent_nodeLine ,struct String* RequiredPath ,int LineNo_inp );
 void free_ResultStruct(struct ResultStruct *v);
 bool Regular_expmatch(char* String,char*Regexpr);
-//struct  GetNode_Result *locateNodeLine(struct Database *DB,int parent_nodeLine,char* QUERY ,char* RegExp ,bool onlypath ,bool isRegExp ) ;
 int ParentNode(struct Database *DB,int nodeId) ;
 struct VectorInt *ChildNodes(struct Database *DB,int nodeId) ;
 struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId ,char*  QUERY_inp) ;
@@ -87,4 +86,5 @@ void NodeDebug(struct Database *DB, int nodeId ) ;
 void free_DB(struct Database* DB);
 int NextNode(struct Database *DB,int nodeId);
 struct String *Dump_DB(struct Database *DB);
+void Load_dbcontent(struct Database *DB,struct StringList *xmllines) ;
 #endif

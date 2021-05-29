@@ -873,6 +873,16 @@ bool Save_DB(struct Database *DB) {
     }
     return status;
 }
+void Load_dbcontent(struct Database *DB,struct StringList *xmllines) {
+    /* xmllines should not contain /n /r*/
+    struct String lines;init_String(&lines,2000);
+    for(size_t i=0;i<xmllines->length;i++) {
+        StringStringConcat(&lines,&xmllines->items[i]);
+
+    }
+    load_xmlstring(DB, &lines);
+    free_String(&lines);
+}
 bool Load_db(struct Database *DB , char* filename) {
     strcpy(DB->filename ,filename);
     struct String lines;init_String(&lines,2000);
