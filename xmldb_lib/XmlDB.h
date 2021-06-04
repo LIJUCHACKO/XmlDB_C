@@ -87,4 +87,5 @@ void free_DB(struct Database* DB);
 int NextNode(struct Database *DB,int nodeId);
 struct String *Dump_DB(struct Database *DB);
 void Load_dbcontent(struct Database *DB,struct StringList *xmllines) ;
+bool IslowestNode(struct Database *DB, int nodeId);
 #endif

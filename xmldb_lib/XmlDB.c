@@ -340,6 +340,9 @@ static struct suspectedLinenos_Result *suspectedLinenos(struct Database *DB, str
 }
 static void updateNodenoLineMap(struct Database *DB ,int fromLine ) {
     int lineno = fromLine;
+    if (lineno < 0) {
+            lineno = 0;
+    }
     while ((size_t)lineno < DB->global_dbLines.length) {
         int id = DB->global_ids.items[lineno];
         if (id >= 0 ){
@@ -439,7 +442,7 @@ static int fill_DBdata(struct Database *DB, struct String* dbline,struct String*
         }
     } else {
 
-        if (DB->retainid > 0 ){
+        if (DB->retainid >= 0 ){
             unique_id = DB->retainid;
             DB->retainid = -1;
         } else {
@@ -1174,23 +1177,27 @@ static struct ResultStruct * insertAtLine(struct Database *DB, int lineno,struct
     DB->retainid = retainid;
     StringCharCpy(&DB->removeattribute ,"");
     DB->pathIdStack_index = 0;
-
-    DB->reference_linenotoinsert = lineno - 1;
-
     DB->startindex = lineno;
     int startindex_tmp = lineno;
-    struct String  *path_tmp = Valueat(&DB->global_paths,lineno-1);
-    struct String  path;init_String(&path,0);
-    StringStringCpy(&path,path_tmp);
+    if (lineno >0 ){
+        DB->reference_linenotoinsert = lineno - 1;
+        struct String  *path_tmp = Valueat(&DB->global_paths,lineno-1);
+        struct String  path;init_String(&path,0);
+        StringStringCpy(&path,path_tmp);
 
-    char *pre_line= Valueat(&DB->global_dbLines,lineno-1)->charbuf;
-    if (strstr(pre_line, "</")!=NULL || strstr(pre_line, "/>")!=NULL || strstr(pre_line, "<!")!=NULL) {
-        struct StringList path_parts ;init_StringList(&path_parts,0);
-        String_Split(&path_parts,&path, "/");
-        TrimRightString(&path,path_parts.items[path_parts.length-1].length+1);
-        free_StringList(&path_parts);
+        char *pre_line= Valueat(&DB->global_dbLines,lineno-1)->charbuf;
+        if (strstr(pre_line, "</")!=NULL || strstr(pre_line, "/>")!=NULL || strstr(pre_line, "<!")!=NULL) {
+            struct StringList path_parts ;init_StringList(&path_parts,0);
+            String_Split(&path_parts,&path, "/");
+            TrimRightString(&path,path_parts.items[path_parts.length-1].length+1);
+            free_StringList(&path_parts);
+        }
+        StringStringCpy(&DB->path, &path);
+    }else{
+        DB->reference_linenotoinsert=0;
+        clear_String(&DB->path);
     }
-    StringStringCpy(&DB->path, &path);
+
 
     ReplcSubstring(sub_xml,"\n","");
 
@@ -1472,6 +1479,13 @@ struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlch
     init_VectorInt(&ResultSend->nodeids,0);
     init_StringList(&ResultSend->labelvalues,0);
     return ResultSend;
+}
+bool IslowestNode(struct Database *DB, int nodeId){
+    int end = NodeEnd(DB, nodeId);
+    if ((end - NodeLine(DB, nodeId)) == 1 ){
+        return true;
+    }
+    return false;
 }
 
 struct ResultStruct * InserSubNode(struct Database *DB, int nodeId,char* sub_xmlchar ) {
