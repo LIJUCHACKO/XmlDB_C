@@ -76,6 +76,9 @@ void removeid_fromhashtable(struct Hashtable* HashTB,int hashno ,int  nodeId,str
    int lineno = nodeNoToLineno->items[nodeId];
    int LowLM = 0;
     int UpLM = Vect->length - 1;
+    if (UpLM < 0) {
+         return;
+    }
     int MidLM = 0;
     int index = -1;
     while(1) {
@@ -115,6 +118,9 @@ int find_indexhashtable(struct Hashtable* HashTB,int hashno ,int  node_lineno, b
 
    int LowLM = 0;
     int UpLM = Vect->length - 1;
+    if (UpLM < 0) {
+         return -1;
+    }
     int MidLM = 0;
     int index = -1;
 

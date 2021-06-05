@@ -67,6 +67,7 @@ bool Load_db(struct Database *DB , char* filename);
 struct String *GetNodeAttribute(struct Database *DB , int nodeId , char *labelchar );
 struct String *GetNodeValue(struct Database *DB ,int nodeId);
 struct String *GetNodeName(struct Database *DB, int nodeId ) ;
+struct String *GetNodeContentsRaw(struct Database *DB, int nodeId ) ;
 struct String *GetNodeContents(struct Database *DB, int nodeId );
 bool validatexml(struct String *content ) ;
 struct ResultStruct *UpdateNodevalue(struct Database *DB, int nodeId, char* new_valuechar ) ;

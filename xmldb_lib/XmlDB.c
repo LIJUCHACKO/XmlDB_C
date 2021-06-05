@@ -303,11 +303,13 @@ static struct suspectedLinenos_Result *suspectedLinenos(struct Database *DB, str
             int hashno = stringtono(DB, part);
             int from = find_indexhashtable(&DB->pathKeylookup, hashno, lowerbound, false,&DB->nodeNoToLineno);
             int to = find_indexhashtable(&DB->pathKeylookup, hashno, upperbound, true,&DB->nodeNoToLineno);
-            struct VectorInt hashlineids = DB->pathKeylookup.lists[hashno];
-            struct VectorInt Slice  ; init_VectorInt(&Slice,0);
-            Slice_VectorInt(&Slice,&hashlineids,from,to);
-            concatenate_VectorInt(&NodeNos,&Slice);
-            free_VectorInt(&Slice);
+            if (from >= 0 && to >= 0) {
+                struct VectorInt hashlineids = DB->pathKeylookup.lists[hashno];
+                struct VectorInt Slice  ; init_VectorInt(&Slice,0);
+                Slice_VectorInt(&Slice,&hashlineids,from,to);
+                concatenate_VectorInt(&NodeNos,&Slice);
+                free_VectorInt(&Slice);
+             }
             break;
         }
         index--;
@@ -883,6 +885,15 @@ void Load_dbcontent(struct Database *DB,struct StringList *xmllines) {
         StringStringConcat(&lines,&xmllines->items[i]);
 
     }
+    if (lines.length < 2000) {
+        if (!validatexml(&lines)) {
+            printf("\n%s\n",lines.charbuf);
+            printf("Load_dbcontent-XML not valid ,DB not loaded");
+            free_String(&lines);
+            return;
+        }
+    }
+
     load_xmlstring(DB, &lines);
     free_String(&lines);
 }
@@ -962,6 +973,35 @@ struct String * GetNodeName(struct Database *DB, int nodeId )  {
     free_StringList(&pathparts);
     return content;
 }
+struct String * GetNodeContentsRaw(struct Database *DB, int nodeId )  {
+    while( DB->WriteLock) {
+        printf("Waiting for WriteLock-GetNodeContents\n");
+    }
+    struct String* Output=malloc(sizeof (struct String));init_String(Output,0);
+    int beginning = NodeLine(DB, nodeId);
+    if (beginning < 0) {
+        return Output;
+    }
+    int end = NodeEnd(DB, nodeId);
+    if (DB->Debug_enabled ){
+        printf("getNodeContents :Fetching Contents from line %d to %d \n", beginning, end);
+    }
+    struct StringList lines ;init_StringList(&lines,0);
+    for(int i=beginning;i<end;i++) {
+        appendto_StringList(&lines,Valueat(&DB->global_dbLines,i));
+
+    }
+    struct StringList lines2 ;init_StringList(&lines2,0);
+    formatxml(&lines2,&lines);
+    free_StringList(&lines);
+    for(size_t i=0;i<lines2.length;i++) {
+        StringStringConcat(Output,&lines2.items[i]);
+        StringCharConcat(Output,"\n");
+
+    }
+    free_StringList(&lines2);
+    return Output;
+}
 struct String * GetNodeContents(struct Database *DB, int nodeId )  {
     while( DB->WriteLock) {
         printf("Waiting for WriteLock-GetNodeContents\n");
@@ -989,6 +1029,8 @@ struct String * GetNodeContents(struct Database *DB, int nodeId )  {
     formatxml(&lines2,&lines);
     free_StringList(&lines);
     for(size_t i=0;i<lines2.length;i++) {
+        ReplcSubstring(&lines2.items[i],"<nil:node>", "");
+        ReplcSubstring(&lines2.items[i],"<nil:node/>", "");
         StringStringConcat(Output,&lines2.items[i]);
         StringCharConcat(Output,"\n");
 
@@ -1123,14 +1165,20 @@ bool validatexml(struct String *contentStr ) {
     Sub_String(&contentlast,contentStr,lastindex,index);
     TrimSpaceString(&contentlast);
     if( contentlast.length > 0 ){
+        printf("\n%s\n",contentlast.charbuf);
         return false;
     }
     free_String(&contentlast);
 
     if (CommentStarted || xmldeclarationStarted || Comment2Started || CDATAStarted) {
+        printf("\nComment/xmldeclaration/CDATA session not closed\n");
         return false;
     }
     if (nodesnames.length > 0) {
+        printf("\nNodes not closed\n");
+        for(size_t i=0;i<nodesnames.length;i++) {
+            printf("\n%s\n",nodesnames.items[i].charbuf);
+        }
         return false;
     }
     return true;
@@ -1347,6 +1395,7 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     StringCharCpy(&label,labelchar);
     struct String value;init_String(&value,0);
     StringCharCpy(&value,valuechar);
+    TrimSpaceString(&value);
     while( DB->WriteLock) {
         printf("Waiting for WriteLock-UpdateAttributevalue\n");
     }
@@ -1372,10 +1421,12 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     StringStringCpy(&labelcpy,&label);
     StringCharConcat(&labelcpy,"=");
 
-    StringStringCpy(&newlabelvalue,&label);
-    StringCharConcat(&newlabelvalue,"=\"");
-    StringStringConcat(&newlabelvalue,&value);
-    StringCharConcat(&newlabelvalue,"\"");
+    if(value.length>0){
+        StringStringCpy(&newlabelvalue,&label);
+        StringCharConcat(&newlabelvalue,"=\"");
+        StringStringConcat(&newlabelvalue,&value);
+        StringCharConcat(&newlabelvalue,"\"");
+    }
     String_Split(&contentparts,content, ">");
     struct String *contentparts0= &contentparts.items[0];
 
@@ -1826,6 +1877,9 @@ int ParentNode(struct Database *DB,int nodeId)  {
     }
     int LineNo = DB->nodeNoToLineno.items[nodeId];
     int ResultId = -1;
+    if (nodeId < 0) {
+            return ResultId;
+    }
     if (LineNo < 0) {
         return ResultId;
     }
@@ -1847,7 +1901,9 @@ struct VectorInt *ChildNodes(struct Database *DB,int nodeId) {
         printf("Waiting for WriteLock-ChildNodes\n");
     }
     int LineNo = DB->nodeNoToLineno.items[nodeId];
-
+    if (nodeId < 0) {
+            return ResultIds;
+    }
     if (LineNo < 0) {
         return ResultIds;
     }
