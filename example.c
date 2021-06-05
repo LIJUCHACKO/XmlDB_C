@@ -75,6 +75,8 @@ int main()
         printf("\nafter updating Attribute-\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
         UpdateAttributevalue(DB, result->nodeids.items[i], "label", "value");
         printf("\nafter adding Attribute-\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
+        UpdateAttributevalue(DB, result->nodeids.items[i], "font", "");
+        printf("\nafter removing Attribute-\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
 
     }
     printf("\n### Recursive Search##\n");
