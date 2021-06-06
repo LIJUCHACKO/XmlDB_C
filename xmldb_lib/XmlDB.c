@@ -1562,7 +1562,9 @@ struct ResultStruct * InserSubNode(struct Database *DB, int nodeId,char* sub_xml
 
     int end = NodeEnd(DB, nodeId);
     if ((end - NodeLine(DB, nodeId)) == 1 ){
-        return update_nodevalue(DB, nodeId, &sub_xml);
+        struct ResultStruct *result=update_nodevalue(DB, nodeId, &sub_xml);
+        removefrom_VectorInt(&result->nodeids,0);
+        return result;
     }
     if (end < 0 ){
         fprintf(stderr,"Error :node  doesnot exist\n");
