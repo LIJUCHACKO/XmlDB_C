@@ -519,6 +519,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
     struct String buffer1;init_String(&buffer1,0);
     struct String buffer2;init_String(&buffer2,0);
     struct String buffer3;init_String(&buffer3,0);
+    struct String buffer4;init_String(&buffer4,0);
     char* content=contentStr->charbuf;
 
     while(index < contentStr->length) {
@@ -537,6 +538,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
 
 
                     StringStringCpypart(&buffer2,contentStr,lastindex,index);
+                    StringStringCpy(&buffer4,&buffer2);
                     TrimSpaceString(&buffer2);
                     if (buffer2.length > 0) {
                         StringCharCpy(&nodeStart,"<nil:node>");
@@ -545,7 +547,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                         StringCharCpy(&attributebuffer,"");
                         StringCharCpy(&NodeName, "nil:node");
                         ////
-                        int node = fill_DBdata(DB, &nodeStart, &buffer2, &attributebuffer, &NodeName, 2);
+                        int node = fill_DBdata(DB, &nodeStart, &buffer4, &attributebuffer, &NodeName, 2);
                         if (DB->startindex >= 0) {
                             appendto_VectorInt(nodes,node);
                         }
@@ -580,10 +582,11 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                     nodeEnded = true;
 
                     StringStringCpypart(&buffer2,contentStr,lastindex,index);
+                    StringStringCpy(&buffer4,&buffer2);
                     TrimSpaceString(&buffer2);
                     if ( nodeStart.length > 0) {
                         StringStringConcatpart(&nodeStart,contentStr,lastindex,index);
-                        StringStringConcat(&valuebuffer,&buffer2);
+                        StringStringConcat(&valuebuffer,&buffer4);
 
                         lastindex = index;
                     } else {
@@ -595,7 +598,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                             StringCharCpy(&attributebuffer,"");
                             StringCharCpy(&NodeName, "nil:node");
                             ////
-                            int node = fill_DBdata(DB, &nodeStart, &buffer2, &attributebuffer, &NodeName, 2);
+                            int node = fill_DBdata(DB, &nodeStart, &buffer4, &attributebuffer, &NodeName, 2);
                             if (DB->startindex >= 0 ){
                                 appendto_VectorInt(nodes,node);
                             }
@@ -1828,7 +1831,12 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
                                         } else {
                                             struct String valueorAttributeRe ;init_String(&valueorAttributeRe,0);
                                             ReplacewithHTMLSpecialEntities(&valueorAttributeRe,valueorAttribute);
-                                            match = (strcmp(valueorAttributeRe.charbuf , Valueat(&DB->global_values,LineNo)->charbuf)==0);
+                                            struct String tmp ;init_String(&tmp,0);
+                                            StringStringCpy(&tmp,Valueat(&DB->global_values,LineNo));
+                                            TrimSpaceString(&tmp);
+                                            match = (strcmp(valueorAttributeRe.charbuf , tmp.charbuf)==0);
+
+                                            free_String(&tmp);
                                             free_String(&valueorAttributeRe);
                                         }
                                         if (!match) {
