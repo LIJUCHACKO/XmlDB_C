@@ -205,6 +205,15 @@ static struct compare_path_Result * compare_path(struct String* current_path ,st
         }
         char* refpathpart=ref_pathParts.items[ref_pathPartindex].charbuf;
         if((strstr(refpathpart, "<") != NULL) &&  (strstr(refpathpart, ">") != NULL)){
+            if (skipoccured) {
+                //no of remaining parts are matching then
+                if ((cur_pathParts.length - cur_pathPartindex) > (ref_pathParts.length - ref_pathPartindex)) {
+                    cur_pathPartindex++;
+                    continue;
+                } else {
+
+                }
+            }
             appendto_StringList(&Result->label,&ref_pathParts.items[ref_pathPartindex] );
             appendto_StringList(&Result->value,&cur_pathParts.items[cur_pathPartindex] );
             cur_pathPartindex++;
