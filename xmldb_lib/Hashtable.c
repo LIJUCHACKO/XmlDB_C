@@ -27,11 +27,6 @@ void insertid_intohashtable(struct Hashtable* HashTB,int hashno ,int  nodeId,int
     int UpLM = Vect->length - 1;
     int MidLM = 0;
     int index = -1;
-    if (nodeNoToLineno->items[HashTB->lists[hashno].items[LowLM]] == nodeNoToLineno->items[HashTB->lists[hashno].items[UpLM]]){
-        appendto_VectorInt(Vect,nodeId);
-        return;
-    }
-
     while(1) {
         MidLM = (int)((LowLM + UpLM) / 2);
         if ((lineno >= nodeNoToLineno->items[Vect->items[LowLM]])  && (lineno < nodeNoToLineno->items[Vect->items[MidLM]])) {

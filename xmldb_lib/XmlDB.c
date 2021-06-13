@@ -1235,7 +1235,9 @@ static struct ResultStruct * insertAtLine(struct Database *DB, int lineno,struct
         struct String  *path_tmp = Valueat(&DB->global_paths,lineno-1);
         struct String  path;init_String(&path,0);
         StringStringCpy(&path,path_tmp);
-
+        if (( path.charbuf[path.length-2]=='/') &&  (path.charbuf[path.length-1]=='~')){
+            TrimRightString(&path,2);
+        }
         char *pre_line= Valueat(&DB->global_dbLines,lineno-1)->charbuf;
         if (strstr(pre_line, "</")!=NULL || strstr(pre_line, "/>")!=NULL || strstr(pre_line, "<!")!=NULL) {
             struct StringList path_parts ;init_StringList(&path_parts,0);
