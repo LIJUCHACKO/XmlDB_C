@@ -1388,16 +1388,6 @@ struct ResultStruct *UpdateNodevalue(struct Database *DB, int nodeId,char* new_v
         printf("Waiting for WriteLock-UpdateNodevalue\n");
     }
 
-    if ((strstr(new_value.charbuf, "<")!=NULL) || (strstr(new_value.charbuf, ">")!=NULL)) {
-        fprintf(stderr,"\nError :Value contains xml\n");
-        struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
-        char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
-        strcpy(error,"Value contains xml");
-        ResultSend->Error=error;
-        init_VectorInt(&ResultSend->nodeids,0);
-        init_StringList(&ResultSend->labelvalues,0);
-        return ResultSend;
-    }
     struct String Result;init_String(&Result,0);
     ReplacewithHTMLSpecialEntities(&Result,&new_value);
     struct ResultStruct* ResultSend=  update_nodevalue(DB, nodeId, &Result);
