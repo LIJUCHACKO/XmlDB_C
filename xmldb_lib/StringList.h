@@ -8,7 +8,7 @@
 struct StringList{
     size_t length;
     size_t size;
-    struct String* items;
+    struct String* string;
 };
 
 void init_StringList(struct StringList*v,size_t size);

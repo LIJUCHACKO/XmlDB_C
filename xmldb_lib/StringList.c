@@ -4,39 +4,39 @@ void init_StringList(struct StringList *v,size_t size){
     if(size<1){
         size=1;
     }
-    v->items = malloc( size * sizeof(struct String));
+    v->string = malloc( size * sizeof(struct String));
     v->size=size;
     v->length=0;
 }
 
 inline void StringList_Resize(struct StringList *vect,size_t new_size){
         vect->size=new_size;
-        vect->items= realloc(vect->items, new_size * sizeof(struct String));
+        vect->string= realloc(vect->string, new_size * sizeof(struct String));
 
 }
 void free_StringList(struct StringList *vect){
     for(size_t i=0;i<vect->length;i++){
-        free_String(&vect->items[i]);
+        free_String(&vect->string[i]);
     }
-    free(vect->items);
+    free(vect->string);
 }
 void free_StringListReturn(struct StringList *vect){
     for(size_t i=0;i<vect->length;i++){
-        free_String(&vect->items[i]);
+        free_String(&vect->string[i]);
     }
-    free(vect->items);
+    free(vect->string);
     free(vect);
 }
 void clear_StringList(struct StringList *vect){
     for(size_t i=0;i<vect->length;i++){
-        free_String(&vect->items[i]);
+        free_String(&vect->string[i]);
     }
     vect->length=0;
 }
 void appendto_StringList(struct StringList *src_dest,struct String *string){
 
-    init_String(&src_dest->items[src_dest->length],string->length+1);
-    StringStringCpy(&src_dest->items[src_dest->length],string);
+    init_String(&src_dest->string[src_dest->length],string->length+1);
+    StringStringCpy(&src_dest->string[src_dest->length],string);
     src_dest->length++;
 
     if(src_dest->length>= src_dest->size){
@@ -45,14 +45,14 @@ void appendto_StringList(struct StringList *src_dest,struct String *string){
 }
 void concatenate_StringList(struct StringList *dest,struct StringList* src){
     for(size_t i=0;i<src->length;i++){
-        appendto_StringList(dest,&src->items[i]);
+        appendto_StringList(dest,&src->string[i]);
     }
 }
 
 void insertInTo_StringList(struct StringList *src_dest,size_t index,struct String* string){
-      memmove(src_dest->items+index+1,src_dest->items+index,(src_dest->length-index)*sizeof (struct String));
-      init_String(&src_dest->items[index],string->length+1);
-       StringStringCpy(&src_dest->items[index],string);
+      memmove(src_dest->string+index+1,src_dest->string+index,(src_dest->length-index)*sizeof (struct String));
+      init_String(&src_dest->string[index],string->length+1);
+       StringStringCpy(&src_dest->string[index],string);
     src_dest->length++;
     if(src_dest->length>= src_dest->size){
         if(src_dest->size<1000){
@@ -63,8 +63,8 @@ void insertInTo_StringList(struct StringList *src_dest,size_t index,struct Strin
     }
 }
 void removeFrom_StringList(struct StringList *src_dest,size_t index){
-    free_String(&src_dest->items[index]);
-    memmove( src_dest->items+index,src_dest->items+index+1, (src_dest->length-index-1)*sizeof (struct String));
+    free_String(&src_dest->string[index]);
+    memmove( src_dest->string+index,src_dest->string+index+1, (src_dest->length-index-1)*sizeof (struct String));
     src_dest->length--;
 }
 
