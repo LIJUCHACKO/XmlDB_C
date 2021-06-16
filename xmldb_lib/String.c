@@ -183,3 +183,11 @@ void TrimRightString(struct String *src_dest,  size_t size){
     src_dest->length=src_dest->length-size;
     src_dest->charbuf[src_dest->length]='\0';
 }
+int Index(struct String *string,char* substring){
+    char *buffer;
+    int pos=-1;
+    if((buffer=strstr(string->charbuf, substring))!=NULL){
+        pos=(buffer-string->charbuf);
+    }
+    return pos;
+}
