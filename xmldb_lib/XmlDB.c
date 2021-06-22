@@ -1324,7 +1324,7 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
     }
     struct String *content = GetNodeContents(DB, nodeId);
     ReplcSubstring(content,"\n","-");//for strtok
-
+    ReplcSubstring(content,"><",">-<");//for strtok
     if (content->length == 0) {
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
         fprintf(stderr,"Warning :node  doesnot exist\n");
