@@ -1311,8 +1311,8 @@ static struct ResultStruct * replaceNodeRetainid(struct Database *DB, int nodeId
     return ResultSend;
 }
 static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,struct String * new_value ) {
-
-    if ((NodeEnd(DB, nodeId) - NodeLine(DB, nodeId)) > 1) {
+    int Nooflines=NodeEnd(DB, nodeId) - NodeLine(DB, nodeId);
+    if (Nooflines > 2) {
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
         fprintf(stderr,"\nError :Cannot update value- Node contains subnodes\n");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
@@ -1323,6 +1323,8 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
         return ResultSend;
     }
     struct String *content = GetNodeContents(DB, nodeId);
+    ReplcSubstring(content,"\n","-");//for strtok
+
     if (content->length == 0) {
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
         fprintf(stderr,"Warning :node  doesnot exist\n");
@@ -1336,7 +1338,7 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
     struct String *value = GetNodeValue(DB, nodeId);
     struct String result ; init_String(&result,new_value->length*2);
     //char *result= malloc(strlen(new_value)*2 * sizeof(char));
-    if (value->length == 0) {
+    if (value->length == 0 && Nooflines == 1) {
         if ((strstr(content->charbuf, "/>"))!=NULL) {
             struct StringList parts ;init_StringList(&parts,0);
             String_Split(&parts,content, "/>");
@@ -1354,7 +1356,6 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
         struct StringList parts ;init_StringList(&parts,0);
         String_Split(&parts,content, ">");
         if (parts.length > 1) {
-
             struct StringList part1parts ;init_StringList(&part1parts,0);
             String_Split(&part1parts,&parts.string[1], "<");
             StringStringCpy(&result,&parts.string[0]);
@@ -1363,13 +1364,12 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
             StringCharConcat(&result,"<");
             StringStringConcat(&result,&part1parts.string[1]);
             StringCharConcat(&result,">" );
-
             free_StringList(&part1parts);
         }
         free_StringList(&parts);
     }
     free_StringReturn(value);
-    //printf("\n new content %s\n", result.charbuf);
+
     struct ResultStruct* ResultSend= replaceNodeRetainid(DB, nodeId, &result);
     if (DB->Debug_enabled ){
         printf("UpdateNodevalue :Updating node %d\n", nodeId);
