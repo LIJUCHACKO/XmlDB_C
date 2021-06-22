@@ -77,13 +77,15 @@ void String_Split(struct StringList *result ,struct String *string, char* Separa
 
     char * token;
     token= strtok(copy, Separator);
+    size_t pos=token-copy;
     // loop through the string to extract all other tokens
-    while( token != NULL ) {
-        //printf( " %s\n", token ); //printing each token
+    while( pos<  string->length ) {
+        //printf( "- %s\n", token ); //printing each token
         StringCharCpy(&buffer,token);
         appendto_StringList(result,&buffer);
 
         token = strtok(NULL, Separator);
+        pos=token-copy;
     }
     free(copy);
     free_String(&buffer);
