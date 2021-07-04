@@ -93,3 +93,16 @@ struct String * Valueat(struct SegmentedStringList *vect,size_t index){
     }
     return  NULL;
 }
+
+void ModifyValueat(struct SegmentedStringList *vect,size_t index,struct String *newvalue){
+    size_t size=0;
+    size_t i=0;
+    while(i<= vect->lastSegment){
+        if((size+vect->Segments[i].length) >index){
+           // printf("\nSegments[%ld][%ld]",i,index-size);
+            StringStringCpy(&vect->Segments[i].string[index-size],newvalue);
+        }
+        size=size+vect->Segments[i].length;
+        i++;
+    }
+}

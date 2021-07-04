@@ -17,5 +17,5 @@ void removeFrom_SegmentedStringList(struct SegmentedStringList *vect,size_t inde
 
 struct String * Valueat(struct SegmentedStringList *vect,size_t index);
 void insertInTo_SegmentedStringList(struct SegmentedStringList *vect,size_t index,struct String *string);
-
+void ModifyValueat(struct SegmentedStringList *vect,size_t index,struct String *newvalue);
 #endif
