@@ -1403,10 +1403,14 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     while( DB->WriteLock) {
         printf("Waiting for WriteLock-UpdateAttributevalue\n");
     }
-
-    struct String* content = GetNodeContents(DB, nodeId);
-    if ( content->length  == 0) {
-        free_StringReturn(content);
+    int beginning = NodeLine(DB, nodeId);
+    struct String* content = Valueat(&DB->global_dbLines,beginning);//donot free
+    bool NodeWithoutValue=false;
+    if (strstr(content->charbuf, "/>")!=NULL) {
+        NodeWithoutValue=true;
+    }
+   // struct String* content = GetNodeContents(DB, nodeId);
+    if ( beginning < 0) {
         fprintf(stderr,"Warning :node  doesnot exist\n");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
@@ -1431,7 +1435,13 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
         StringStringConcat(&newlabelvalue,&value);
         StringCharConcat(&newlabelvalue,"\"");
     }
-    String_Split(&contentparts,content, ">");
+    if(NodeWithoutValue){
+       String_Split(&contentparts,content, "/>");
+    }else{
+       String_Split(&contentparts,content, ">");
+    }
+
+
     struct String *contentparts0= &contentparts.string[0];
 
     if (strstr(contentparts0->charbuf, labelcpy.charbuf)!=NULL) {
@@ -1451,30 +1461,63 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
         StringCharConcat(contentparts0," ");
         StringStringConcat(contentparts0,&newlabelvalue);
     }
-    StringCharConcat(contentparts0,">");
+    struct String contentnew;init_String(&contentnew,0);
+    if (NodeWithoutValue) {
+        StringStringConcat(&contentnew,contentparts0);
+       StringCharConcat(&contentnew,"/>");
+    }else {
+        StringStringConcat(&contentnew,contentparts0);
+       StringCharConcat(&contentnew,">");
+    }
+
     for(size_t i=0;i<contentparts.length;i++){
         struct String *part=&contentparts.string[i];
         TrimSpaceString(part);
         if( i > 0 && part->length > 0 ){
-            StringStringConcat(contentparts0,part);
-            StringCharConcat(contentparts0,">");
+            StringStringConcat(&contentnew,part);
+            StringCharConcat(&contentnew,">");
         }
     }
+    ModifyValueat(&DB->global_dbLines,beginning,&contentnew);
+    struct String attributebuffer;init_String(&attributebuffer,0);
+    struct StringList parts; init_StringList(&parts,0);
+    TrimSpaceString(contentparts0);
+    String_Split(&parts,contentparts0," ");
+    for (size_t partind=0;partind<parts.length;partind++) {
+        struct String *part=&parts.string[partind];
+        TrimSpaceString(part);
+        if (partind > 0){
+            if (part->length > 0) {
+                if (attributebuffer.length > 1) {
+                    StringCharConcat(&attributebuffer,"||");
+                }
+                StringStringConcat(&attributebuffer,part);
+            }
+        } else {
+        }
+    }
+
+    ModifyValueat(&DB->global_attributes,beginning,&attributebuffer);
     //printf("newcontents-%s",contentparts0.charbuf);
-    struct ResultStruct* ResultSend= replaceNodeRetainid(DB, nodeId, contentparts0);
+   // struct ResultStruct* ResultSend= replaceNodeRetainid(DB, nodeId, contentparts0);
     if (DB->Debug_enabled) {
         printf("UpdateNodevalue :Updating node %d\n", nodeId);
         struct String* NodeContents=GetNodeContents(DB, nodeId);
         printf("%s\n", NodeContents->charbuf);
         free_StringReturn(NodeContents);
     }
-
+    free_StringList(&parts);
+    free_String(&attributebuffer);
     free_StringList(&contentparts);
-    free_StringReturn(content);
     free_String(&newlabelvalue);
     free_String(&oldlabelvalue);
     free_String(&labelcpy);
     //printf("\npPASSED\n");
+    struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+    ResultSend->Error=NULL;
+    init_VectorInt(&ResultSend->nodeids,0);
+    appendto_VectorInt(&ResultSend->nodeids,nodeId);
+    init_StringList(&ResultSend->labelvalues,0);
     return ResultSend;
 }
 struct VectorInt* RemoveNode(struct Database *DB, int nodeId) {
@@ -1901,7 +1944,7 @@ int ParentNode(struct Database *DB,int nodeId)  {
     struct String RequiredPath ; init_String(&RequiredPath,0);
     Sub_String(&RequiredPath, NodePath,0 , NodePath->length-parts.string[parts.length-1].length-1);
 
-    ResultId= LocateRequireParentdNode(DB, 0, &RequiredPath, LineNo);
+    ResultId= LocateRequireParentdNode(DB,NodeLine(DB,0), &RequiredPath, LineNo);
 
     return ResultId;;
 }
