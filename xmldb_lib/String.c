@@ -35,7 +35,9 @@ void free_String(struct String *vect){
 
 }
 void free_StringReturn(struct String *vect){
-   free(vect->charbuf);
+    if(vect->charbuf!=NULL){
+        free(vect->charbuf);
+    }
     free(vect);
 }
 void clear_String(struct String *vect){
