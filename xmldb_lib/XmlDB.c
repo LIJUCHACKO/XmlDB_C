@@ -1247,7 +1247,7 @@ static struct ResultStruct * insertAtLine(struct Database *DB, int lineno,struct
         if (( path.charbuf[path.length-2]=='/') &&  (path.charbuf[path.length-1]=='~')){
             TrimRightString(&path,2);
         }
-        char *pre_line= Valueat(&DB->global_dbLines,lineno-1)->charbuf;
+        char *pre_line= Valueat(&DB->global_dbLines,lineno-1)->charbuf;//don't free
         if (strstr(pre_line, "</")!=NULL || strstr(pre_line, "/>")!=NULL || strstr(pre_line, "<!")!=NULL) {
             struct StringList path_parts ;init_StringList(&path_parts,0);
             String_Split(&path_parts,&path, "/");
@@ -2212,3 +2212,145 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
 
 }
 
+struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  {
+    struct String* Error=malloc(sizeof (struct String)); init_String(Error,0);
+    while(DB->WriteLock) {
+        printf("Waiting for WriteLock-CutPasteAsSubNode\n");
+    }
+    int previousparentid = ParentNode(DB, nodeId);
+    if (previousparentid == -1 ){
+        printf("\nNode doesnot exists");
+        StringCharCpy(Error,"Node doesnot exists");
+        return Error;
+    }
+    //  pSegNo, pindex := getSegmenNoIndex(DB, NodeLine(DB, previousparentid))
+    struct String* previousparentpath = Valueat(&DB->global_paths,NodeLine(DB, previousparentid));
+
+    //remove from old location
+    int Line = NodeLine(DB, nodeId);
+    int end = NodeEnd(DB, nodeId);
+    int startindex = Line;
+
+    struct VectorInt DB_global_ids; init_VectorInt(&DB_global_ids,0);
+    struct StringList DB_global_dbLines; init_StringList(&DB_global_dbLines,0);
+    struct StringList DB_global_paths; init_StringList(&DB_global_paths,0);
+    struct StringList DB_global_values; init_StringList(&DB_global_values,0);
+    struct StringList DB_global_attributes; init_StringList(&DB_global_attributes,0);
+    DB->WriteLock = true;
+    while( Line < end ){
+        appendto_VectorInt(&DB_global_ids, DB->global_ids.items[startindex]);
+        removefrom_VectorInt(&DB->global_ids, startindex);
+
+        appendto_StringList(&DB_global_dbLines, Valueat(&DB->global_dbLines,startindex));
+        removeFrom_SegmentedStringList(&DB->global_dbLines,startindex);
+        appendto_StringList(&DB_global_paths, Valueat(&DB->global_paths,startindex));
+        removeFrom_SegmentedStringList(&DB->global_paths,startindex);
+        appendto_StringList(&DB_global_values, Valueat(&DB->global_values,startindex));
+        removeFrom_SegmentedStringList(&DB->global_values,startindex);
+        appendto_StringList(&DB_global_attributes, Valueat(&DB->global_attributes,startindex));
+        removeFrom_SegmentedStringList(&DB->global_attributes,startindex);
+        Line++;
+
+    }
+    updateNodenoLineMap(DB, 0);
+
+    int ToNodeend = NodeEnd(DB, UnderId);
+    if (ToNodeend == -1) {
+         printf("\nNew Parent Node doesnot exists");
+         StringCharCpy(Error,"New Parent Node doesnot exists");
+         return Error;
+    }
+    struct String *NewParentNodename = GetNodeName(DB, UnderId);
+    bool NewParentNodeisEmpty = false;
+    int insertLine = ToNodeend - 1;
+    if ((ToNodeend - NodeLine(DB, UnderId)) == 1) {
+        struct String * dbLine=Valueat(&DB->global_dbLines,insertLine);//don't free
+        if (strstr(dbLine->charbuf, "/>")!=NULL  ) {
+            NewParentNodeisEmpty = true;
+            ReplcSubstring(dbLine, "/>", ">");
+        } else {
+            printf("\nNode is a lowest node , not a nil node");
+            StringCharCpy(Error," Node is a lowest node , not a nil node");
+            return Error;
+        }
+
+    }
+    ;
+    struct String newparentpath;
+    init_String(&newparentpath,0);
+    //prepare initial path
+    if (NewParentNodeisEmpty) {
+        StringStringCpy(&newparentpath,Valueat(&DB->global_paths,insertLine));
+    } else {
+        StringStringCpy(&newparentpath,Valueat(&DB->global_paths,insertLine-1));
+    }
+    if (( newparentpath.charbuf[newparentpath.length-2]=='/') &&  (newparentpath.charbuf[ newparentpath.length-1]=='~')){
+        TrimRightString(&newparentpath,2);
+    }
+     char *pre_line= Valueat(&DB->global_dbLines,insertLine)->charbuf;//don't free
+    if (strstr(pre_line, "</")!=NULL || strstr(pre_line, "/>")!=NULL || strstr(pre_line, "<!")!=NULL) {
+        struct StringList path_parts ;init_StringList(&path_parts,0);
+        String_Split(&path_parts,&newparentpath, "/");
+        TrimRightString(&newparentpath,path_parts.string[path_parts.length-1].length+1);
+        free_StringList(&path_parts);
+    }
+    //Paste to new location
+    Line = 0;
+    if (NewParentNodeisEmpty) {
+        insertLine++;
+    }
+    DB->WriteLock = true;
+    while( Line < (int) DB_global_dbLines.length) {
+        //SegNo, index := getSegmenNoIndex(DB, Line)
+        StringStringCpy(&DB->path,&newparentpath);
+        ReplcSubstring(&newparentpath,previousparentpath->charbuf, "");
+        //DB->path = newparentpath + strings.ReplaceAll(DB_global_paths[Line], previousparentpath, "")
+
+        insertInTo_SegmentedStringList(&DB->global_dbLines , insertLine, &DB_global_dbLines.string[Line]);
+        insertInTo_SegmentedStringList(&DB->global_values , insertLine, &DB_global_values.string[Line]);
+        insertInTo_SegmentedStringList(&DB->global_attributes  ,insertLine, &DB_global_attributes.string[Line]);
+        insertInTo_SegmentedStringList(&DB->global_paths , insertLine, &DB->path);
+        inserto_VectorInt(&DB->global_ids, insertLine, DB_global_ids.items[Line]);
+        insertLine++;
+
+        Line++;
+    }
+    free_VectorInt(&DB_global_ids);
+    free_StringList(&DB_global_dbLines);
+    free_StringList(&DB_global_values);
+    free_StringList(&DB_global_attributes);
+    free_StringList(&DB_global_paths);
+
+    if (NewParentNodeisEmpty) {
+        struct String tmp ;init_String(&tmp,0);
+        insertInTo_SegmentedStringList(&DB->global_values , insertLine, &tmp);
+        insertInTo_SegmentedStringList(&DB->global_attributes , insertLine, &tmp);
+
+        StringStringCpy(&tmp,&newparentpath);
+        StringCharConcat(&tmp,"/~");
+        insertInTo_SegmentedStringList(&DB->global_paths , insertLine, &tmp);
+
+        StringCharCpy(&tmp,"</");
+        StringStringConcat(&tmp,NewParentNodename);
+        StringCharConcat(&tmp,">");
+        insertInTo_SegmentedStringList(&DB->global_dbLines , insertLine, &tmp);
+
+        free_String(&tmp);
+
+
+        inserto_VectorInt(&DB->global_ids, insertLine, DB->global_lineLastUniqueid);
+        DB->Nodeendlookup.items[UnderId] = DB->global_lineLastUniqueid;
+        DB->global_lineLastUniqueid++;
+        if (DB->global_lineLastUniqueid >= DB->maxInt ){
+            printf("load_db: Total no. of Uniqueid>= DB.MaxNooflines, Please increase DB.MaxNooflines before loading db");
+            exit(1);
+        }
+    }
+    free_String(&newparentpath);
+    free_StringReturn(NewParentNodename);
+    updateNodenoLineMap(DB, 0);
+
+    DB->startindex = -1;
+    Error->charbuf=NULL;
+    return Error;
+}
