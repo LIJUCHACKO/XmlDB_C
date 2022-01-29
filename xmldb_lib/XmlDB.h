@@ -55,6 +55,7 @@ struct Database  {
     int startindex;
     struct String path;
     int maxInt;
+    uint maxHashValue;
     bool WriteLock;
 };
 struct VectorInt* Get_common(struct VectorInt* set1 ,struct VectorInt*  set2 );

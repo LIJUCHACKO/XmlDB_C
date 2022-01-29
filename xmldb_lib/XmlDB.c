@@ -282,8 +282,8 @@ static int stringtono(struct Database *DB, struct String* line )  {
     for (size_t i=0;i< line->length;i++) {
         total = total + ((int)charbuf[i])*i;
     }
-    if (total > DB->maxInt) {
-        total = total - DB->maxInt;
+    if (total >= DB->maxHashValue) {
+        total = total - DB->maxHashValue;
     }
     return total;
 }
@@ -828,6 +828,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
     free_String(&buffer1);
     free_String(&buffer2);
     free_String(&buffer3);
+    free_String(&buffer4);
     free_String(&nodeStart);
     free_String(&attributebuffer);
     free_String(&valuebuffer);
@@ -842,7 +843,8 @@ struct Database* init_Database(int maxNoofLines){
     DB->maxInt = maxNoofLines;
     init_VectorInt(&DB->deleted_ids,10);
     init_VectorInt(&DB->nodeNoToLineno, DB->maxInt);/*fixed size*/
-    init_hashtable(&DB->pathKeylookup, DB->maxInt);/*fixed size*/
+    DB->maxHashValue=DB->maxInt/10;
+    init_hashtable(&DB->pathKeylookup, DB->maxHashValue);/*fixed size*/
     init_VectorInt(&DB->Nodeendlookup, DB->maxInt);/*fixed size*/
     DB->startindex = -1;
     DB->retainid = -1;
@@ -888,6 +890,7 @@ static void load_xmlstring(struct Database *DB ,struct String* content ) {
             //printf("\n value- %ld attribute-%ld", DB->global_values->items[i]->length, DB->global_attributes->items[i]->length);
         }
     }
+    free_VectorInt(&nodes);
 
 }
 bool SaveAs_DB(struct Database *DB, char *filename ) {
@@ -981,6 +984,7 @@ struct String* GetNodeAttribute(struct Database *DB ,int nodeId ,char* labelchar
         }
         free_StringList(&LabelValue);
     }
+    free_String(&label);
     free_StringList(&attributes);
     return content;
 }
@@ -2080,6 +2084,8 @@ static void preparePathparts(struct String *path_in,struct StringList *result){
         i = Index(&path, "]/");
     }
     appendto_StringList(result,&path);
+    free_String(&tmp);
+    free_String(&path);
 }
 static void pathwithoutvalue(struct String * path ,struct String *output)  {
     struct StringList items;init_StringList(&items,10);
@@ -2097,6 +2103,9 @@ static void pathwithoutvalue(struct String * path ,struct String *output)  {
         }
 
     }
+     free_StringList(&items);
+     free_String(&value);
+     free_String(&pathonly);
 }
 
 struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QUERY_inpch) {
@@ -2244,6 +2253,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     free_VectorInt(&final_nodesLineNo);
     free_String(&tmp);
     free_String(&RequiredPath);
+    free_String(&QUERY_inp);
     return ResultSend;
 
 }

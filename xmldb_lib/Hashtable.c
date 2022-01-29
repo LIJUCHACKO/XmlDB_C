@@ -1,9 +1,9 @@
  #include "Hashtable.h"
 
-void init_hashtable(struct Hashtable* hashtable ,int size){
+void init_hashtable(struct Hashtable* hashtable ,size_t size){
     hashtable->lists= (struct VectorInt *)malloc(size*sizeof(struct VectorInt));
     hashtable->size=size;
-    for(int i=0;i<size;i++){
+    for(size_t i=0;i<size;i++){
         init_VectorInt(&hashtable->lists[i],0);
     }
 
@@ -11,7 +11,10 @@ void init_hashtable(struct Hashtable* hashtable ,int size){
 }
 
 void free_hashtable(struct Hashtable* hashtable){
-    free_VectorInt(hashtable->lists);
+    for(int i=0;i<hashtable->size;i++){
+        free_VectorInt(&hashtable->lists[i]);
+    }
+    free(hashtable->lists);
 }
 void insertid_intohashtable(struct Hashtable* HashTB,int hashno ,int  nodeId,int reference_linenotoinsert,struct VectorInt *nodeNoToLineno) {
 
