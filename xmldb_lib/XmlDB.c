@@ -538,6 +538,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                 if (content[index+1] != '/') {
                     if (nodeStart.length > 0) {
                         //////
+                        ReplcSubstring(&attributebuffer,"\"\"", "\"");
                         int node = fill_DBdata(DB, &nodeStart, &valuebuffer, &attributebuffer, &NodeName, 1);
                         if (DB->startindex >= 0) {
                             appendto_VectorInt(nodes,node);
@@ -556,6 +557,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                         StringCharCpy(&attributebuffer,"");
                         StringCharCpy(&NodeName, "nil:node");
                         ////
+                        //ReplcSubstring(&attributebuffer,"\"\"", "\"");
                         int node = fill_DBdata(DB, &nodeStart, &buffer4, &attributebuffer, &NodeName, 2);
                         if (DB->startindex >= 0) {
                             appendto_VectorInt(nodes,node);
@@ -607,6 +609,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                             StringCharCpy(&attributebuffer,"");
                             StringCharCpy(&NodeName, "nil:node");
                             ////
+                            //ReplcSubstring(&attributebuffer,"\"\"", "\"");
                             int node = fill_DBdata(DB, &nodeStart, &buffer4, &attributebuffer, &NodeName, 2);
                             if (DB->startindex >= 0 ){
                                 appendto_VectorInt(nodes,node);
@@ -633,6 +636,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                     if (buffer3.length > 0) {
                         StringCharCpy(&NodeName,"!COMMENT!");
                         ////
+                        ReplcSubstring(&attributebuffer,"\"\"", "\"");
                         int node = fill_DBdata(DB, &buffer1, &valuebuffer, &attributebuffer, &NodeName, 2);
                         if (DB->startindex >= 0) {
                             appendto_VectorInt(nodes,node);
@@ -651,6 +655,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                     if (buffer3.length > 0 ){
                         StringCharCpy(&NodeName,"!CDATA!");
                         ////
+                        ReplcSubstring(&attributebuffer,"\"\"", "\"");
                         int node = fill_DBdata(DB, &buffer1, &valuebuffer, &attributebuffer, &NodeName, 2);
                         if ( DB->startindex >= 0 ){
                             appendto_VectorInt(nodes,node);
@@ -671,6 +676,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                         ////
                         /// \brief node
                         StringCharCpy(&NodeName,"!XMLDECL!");
+                        ReplcSubstring(&attributebuffer,"\"\"", "\"");
                         int node = fill_DBdata(DB, &buffer1, &valuebuffer, &attributebuffer, &NodeName, 2);
                         if ( DB->startindex >= 0 ){
                             appendto_VectorInt(nodes,node);
@@ -688,6 +694,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                 if (buffer3.length > 0 ){
                     StringCharCpy(&NodeName,"!COMMENT2!");
                     ///
+                    ReplcSubstring(&attributebuffer,"\"\"", "\"");
                     int node = fill_DBdata(DB,&buffer1, &valuebuffer, &attributebuffer, &NodeName, 2);
                     if ( DB->startindex >= 0 ){
                         appendto_VectorInt(nodes,node);
@@ -703,7 +710,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                     StringStringCpypart(&buffer2,contentStr,lastindex+1,index-1);
                     TrimSpaceString(&buffer2);
                     struct StringList parts; init_StringList(&parts,0);
-                    String_Split(&parts,&buffer2," ");
+                    String_Split(&parts,&buffer2,"\" ");
                     clear_String(&attributebuffer);
                     for (size_t partind=0;partind<parts.length;partind++) {
                         struct String *part=&parts.string[partind];
@@ -714,12 +721,22 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                                     StringCharConcat(&attributebuffer,"||");
                                 }
                                 StringStringConcat(&attributebuffer,part);
+                                StringCharConcat(&attributebuffer,"\"");
                             }
                         } else {
+                            struct StringList subparts; init_StringList(&subparts,0);
+                            String_Split(&subparts,part," ");
+                            if (subparts.length > 1 ){
+                                StringStringConcat(&attributebuffer,&subparts.string[1]);
+                                StringCharConcat(&attributebuffer,"\"");
+                            }
+                            StringStringCpy(&NodeName,&subparts.string[0]);
+                            free_StringList(&subparts);
                         }
                     }
                     lastindex = index + 1;
                     ///
+                    ReplcSubstring(&attributebuffer,"\"\"", "\"");
                     int node = fill_DBdata(DB, &nodeStart, &valuebuffer, &attributebuffer, &parts.string[0], 2);
                     if ( DB->startindex >= 0 ){
                         appendto_VectorInt(nodes,node);
@@ -736,12 +753,14 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                         ///
                         if (nodeStart.length > 0 ){
                             StringStringConcatpart(&nodeStart,contentStr,lastindex,index+1);
+                            ReplcSubstring(&attributebuffer,"\"\"", "\"");
                             int node = fill_DBdata(DB, &nodeStart , &valuebuffer , &attributebuffer , &buffer2, 2);
                             if ( DB->startindex >= 0 ){
                                 appendto_VectorInt(nodes,node);
                             }
                         } else {
                             StringStringCpypart(&buffer3,contentStr,lastindex,index+1);
+                            ReplcSubstring(&attributebuffer,"\"\"", "\"");
                             int node = fill_DBdata(DB, &buffer3, &valuebuffer, &attributebuffer , &buffer2, 3);
                             if (DB->startindex >= 0) {
                                 appendto_VectorInt(nodes,node);
@@ -758,7 +777,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                         TrimSpaceString(&buffer2);
                         clear_String(&attributebuffer);
                         struct StringList parts; init_StringList(&parts,0);
-                        String_Split(&parts,&buffer2," ");
+                        String_Split(&parts,&buffer2,"\" ");
                         for (size_t partind=0;partind<parts.length;partind++) {
                             struct String *part=&parts.string[partind];
                             TrimSpaceString(part);
@@ -768,9 +787,17 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                                         StringCharConcat(&attributebuffer,"||");
                                     }
                                     StringStringConcat(&attributebuffer,part);
+                                    StringCharConcat(&attributebuffer,"\"");
                                 }
                             } else {
-                                StringStringCpy(&NodeName,part);
+                                struct StringList subparts; init_StringList(&subparts,0);
+                                String_Split(&subparts,part," ");
+                                if (subparts.length > 1 ){
+                                    StringStringConcat(&attributebuffer,&subparts.string[1]);
+                                    StringCharConcat(&attributebuffer,"\"");
+                                }
+                                StringStringCpy(&NodeName,&subparts.string[0]);
+                                free_StringList(&subparts);
                             }
                         }
                         free_StringList(&parts);
@@ -948,6 +975,7 @@ struct String* GetNodeAttribute(struct Database *DB ,int nodeId ,char* labelchar
             TrimSpaceString(&label);
             if (strcmp(LabelValue.string[0].charbuf ,label.charbuf)==0) {
                 StringStringCpy(content,&LabelValue.string[1]);
+                TrimRightString(content,1);//to remove "
                 return content;
             }
         }
@@ -1447,7 +1475,7 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     if (strstr(contentparts0->charbuf, labelcpy.charbuf)!=NULL) {
         struct String* oldvalue = GetNodeAttribute(DB, nodeId, labelchar);
 
-
+        //printf("oldvalue -%s --", oldvalue->charbuf);
         StringStringCpy(&oldlabelvalue,&label);
         StringCharConcat(&oldlabelvalue,"=\"");
         StringStringConcat(&oldlabelvalue,oldvalue);
@@ -1482,7 +1510,7 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     struct String attributebuffer;init_String(&attributebuffer,0);
     struct StringList parts; init_StringList(&parts,0);
     TrimSpaceString(contentparts0);
-    String_Split(&parts,contentparts0," ");
+    String_Split(&parts,contentparts0,"\" ");
     for (size_t partind=0;partind<parts.length;partind++) {
         struct String *part=&parts.string[partind];
         TrimSpaceString(part);
@@ -1492,11 +1520,19 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
                     StringCharConcat(&attributebuffer,"||");
                 }
                 StringStringConcat(&attributebuffer,part);
+                StringCharConcat(&attributebuffer,"\"");
             }
         } else {
+            struct StringList subparts; init_StringList(&subparts,0);
+            String_Split(&subparts,part," ");
+            if (subparts.length > 1 ){
+                StringStringConcat(&attributebuffer,&subparts.string[1]);
+                StringCharConcat(&attributebuffer,"\"");
+            }
+            free_StringList(&subparts);
         }
     }
-
+    ReplcSubstring(&attributebuffer,"\"\"", "\"");
     ModifyValueat(&DB->global_attributes,beginning,&attributebuffer);
     //printf("newcontents-%s",contentparts0.charbuf);
    // struct ResultStruct* ResultSend= replaceNodeRetainid(DB, nodeId, contentparts0);

@@ -85,6 +85,10 @@ int main()
         printf("\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
     }
 
+    NodeDebug(DB,0);
+     printf("\n---------\n");
+    CutPasteAsSubNode(DB,8,1);
+    NodeDebug(DB,0);
     SaveAs_DB(DB, "sample_mod.html" ) ;
     free(DB);
     return 0;

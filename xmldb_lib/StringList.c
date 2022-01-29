@@ -72,11 +72,18 @@ void String_Split(struct StringList *result ,struct String *string, char* Separa
     clear_StringList(result);
     struct String buffer;
     init_String(&buffer,0);
-    char *copy = (char *)malloc(string->length + 1);
-    memcpy(copy, string->charbuf,string->length+1);
+    struct String string_cpy;
+    init_String(&string_cpy,0);
+    StringStringCpy(&string_cpy,string);
+
+    //strtok doesnot support substring as delimiter
+    ReplcSubstring(&string_cpy,Separator,"^"); //hope nobody use ^
+    char strtokSeperator[2];
+    strcpy(strtokSeperator,"^");
+    char *copy=string_cpy.charbuf;
 
     char * token;
-    token= strtok(copy, Separator);
+    token= strtok(copy, strtokSeperator);
     size_t pos=token-copy;
     // loop through the string to extract all other tokens
     while( pos<  string->length ) {
@@ -84,7 +91,7 @@ void String_Split(struct StringList *result ,struct String *string, char* Separa
         StringCharCpy(&buffer,token);
         appendto_StringList(result,&buffer);
 
-        token = strtok(NULL, Separator);
+        token = strtok(NULL, strtokSeperator);
         pos=token-copy;
     }
     free(copy);
