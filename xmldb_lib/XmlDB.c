@@ -4,7 +4,7 @@
 static void readLines(struct String *Lines, char *path) {
     FILE *fp = fopen(path, "r");
     if (fp == NULL){
-        printf("\nCannot open file %s",path);
+        fprintf(stderr,"\nCannot open file %s",path);
         return ;
     }
     char * line = NULL;
@@ -78,7 +78,7 @@ static void ReplacewithHTMLSpecialEntities(struct String* Result,struct String* 
 static bool writeLines(struct Database *DB ,char* path )  {
     FILE *fp = fopen(path, "w");
     if (fp == NULL){
-        printf("\nCannot open file %s",path);
+        fprintf(stderr,"\nCannot open file %s",path);
         return false;
     }
     struct String buffer;
@@ -366,22 +366,22 @@ static void updateNodenoLineMap(struct Database *DB ,int fromLine ) {
 }
 int NodeLine(struct Database *DB, int nodeId )  {
     while( DB->WriteLock ){
-        printf("Waiting for WriteLock-NodeLine\n");
+        fprintf(stderr,"Waiting for WriteLock-NodeLine\n");
     }
     int lineno = DB->nodeNoToLineno.items[nodeId];
     if (lineno < 0 ){
-        printf("Warning :node  doesnot exist\n");
+        fprintf(stderr,"Warning :node  doesnot exist\n");
         lineno = -1;
     }
     return lineno;
 }
 int NodeEnd(struct Database *DB, int nodeId )  {
     while(DB->WriteLock) {
-        printf("Waiting for WriteLock-NodeEnd\n");
+        fprintf(stderr,"Waiting for WriteLock-NodeEnd\n");
     }
     int lineno = DB->nodeNoToLineno.items[nodeId];
     if (lineno < 0) {
-        printf("Warning :node  doesnot exist\n");
+        fprintf(stderr,"Warning :node  doesnot exist\n");
         return -1;
     }
 
@@ -390,7 +390,7 @@ int NodeEnd(struct Database *DB, int nodeId )  {
         lineno = DB->nodeNoToLineno.items[DB->Nodeendlookup.items[nodeId]] + 1;
 
     } else {
-        printf("Warning :node  doesnot exist\n");
+        fprintf(stderr,"Warning :node  doesnot exist\n");
         lineno = -1;
     }
     return lineno;
@@ -462,7 +462,7 @@ static int fill_DBdata(struct Database *DB, struct String* dbline,struct String*
                     unique_id = DB->deleted_ids.items[0];
                     removefrom_VectorInt(&DB->deleted_ids,0);
                 } else {
-                    printf("InsertAtLine: Total no. of Uniqueid>= DB->maxInt, Please increase maxNoofLines in init_Database(int maxNoofLines);");
+                    fprintf(stderr,"InsertAtLine: Total no. of Uniqueid>= DB->maxInt, Please increase maxNoofLines in init_Database(int maxNoofLines);");
                     exit(1);
                 }
             }
@@ -480,7 +480,7 @@ static int fill_DBdata(struct Database *DB, struct String* dbline,struct String*
         if ((DB->global_lineLastUniqueid < DB->maxInt) && (unique_id == DB->global_lineLastUniqueid)) {
             DB->global_lineLastUniqueid++;
             if (DB->global_lineLastUniqueid >= DB->maxInt ){
-                printf("load_db: Total no. of Uniqueid>= DB->MaxNooflines, Please increase  maxNoofLines in init_Database(int maxNoofLines);");
+                fprintf(stderr,"load_db: Total no. of Uniqueid>= DB->MaxNooflines, Please increase  maxNoofLines in init_Database(int maxNoofLines);");
                 exit(1);
             }
         }
@@ -895,7 +895,7 @@ static void load_xmlstring(struct Database *DB ,struct String* content ) {
 }
 bool SaveAs_DB(struct Database *DB, char *filename ) {
     while( DB->WriteLock) {
-        printf("Waiting for WriteLock-Save_DB\n");
+        fprintf(stderr,"Waiting for WriteLock-Save_DB\n");
     }
 
     bool status= writeLines(DB, filename);
@@ -907,7 +907,7 @@ bool SaveAs_DB(struct Database *DB, char *filename ) {
 }
 bool Save_DB(struct Database *DB) {
     while( DB->WriteLock) {
-        printf("Waiting for WriteLock-Save_DB\n");
+        fprintf(stderr,"Waiting for WriteLock-Save_DB\n");
     }
     if (strlen(DB->filename) == 0) {
         fprintf(stderr,"Filename not specified\n");
@@ -929,8 +929,8 @@ void Load_dbcontent(struct Database *DB,struct StringList *xmllines) {
     }
     if (lines.length < 2000) {
         if (!validatexml(&lines)) {
-            printf("\n%s\n",lines.charbuf);
-            printf("Load_dbcontent-XML not valid ,DB not loaded");
+            fprintf(stderr,"\n%s\n",lines.charbuf);
+            fprintf(stderr,"Load_dbcontent-XML not valid ,DB not loaded");
             free_String(&lines);
             return;
         }
@@ -960,11 +960,11 @@ struct String* GetNodeAttribute(struct Database *DB ,int nodeId ,char* labelchar
     StringCharCpy(&label,labelchar);
     struct String *content=malloc(sizeof (struct String));init_String(content,0);
     while( DB->WriteLock) {
-        printf("Waiting for WriteLock-GetNodeAttribute\n");
+        fprintf(stderr,"Waiting for WriteLock-GetNodeAttribute\n");
     }
     int LineNo = DB->nodeNoToLineno.items[nodeId];
     if (LineNo < 0 ){
-        printf("Warning :node  doesnot exist\n");
+        fprintf(stderr,"Warning :node  doesnot exist\n");
         return NULL;
     }
     struct StringList attributes ;init_StringList(&attributes,0);
@@ -991,11 +991,11 @@ struct String* GetNodeAttribute(struct Database *DB ,int nodeId ,char* labelchar
 struct String *GetNodeValue(struct Database *DB ,int nodeId)  {
     struct String* content=malloc(sizeof (struct String));init_String(content,0);
     while( DB->WriteLock) {
-        printf("Waiting for WriteLock-GetNodeValue\n");
+        fprintf(stderr,"Waiting for WriteLock-GetNodeValue\n");
     }
     int lineno = DB->nodeNoToLineno.items[nodeId];
     if (lineno < 0) {
-        printf("Warning :node  doesnot exist\n");
+        fprintf(stderr,"Warning :node  doesnot exist\n");
         return content;
     }
     StringStringCpy(content,Valueat(&DB->global_values,lineno));
@@ -1004,11 +1004,11 @@ struct String *GetNodeValue(struct Database *DB ,int nodeId)  {
 struct String * GetNodeName(struct Database *DB, int nodeId )  {
     struct String* content=malloc(sizeof (struct String));init_String(content,0);
     while( DB->WriteLock) {
-        printf("Waiting for WriteLock-GetNodeName\n");
+        fprintf(stderr,"Waiting for WriteLock-GetNodeName\n");
     }
     int lineno = DB->nodeNoToLineno.items[nodeId];
     if (lineno < 0) {
-        printf("Warning :node  doesnot exist\n");
+        fprintf(stderr,"Warning :node  doesnot exist\n");
         return content;
     }
     struct StringList pathparts ;init_StringList(&pathparts,0);
@@ -1019,7 +1019,7 @@ struct String * GetNodeName(struct Database *DB, int nodeId )  {
 }
 struct String * GetNodeContentsRaw(struct Database *DB, int nodeId )  {
     while( DB->WriteLock) {
-        printf("Waiting for WriteLock-GetNodeContents\n");
+        fprintf(stderr,"Waiting for WriteLock-GetNodeContents\n");
     }
     struct String* Output=malloc(sizeof (struct String));init_String(Output,0);
     int beginning = NodeLine(DB, nodeId);
@@ -1028,7 +1028,7 @@ struct String * GetNodeContentsRaw(struct Database *DB, int nodeId )  {
     }
     int end = NodeEnd(DB, nodeId);
     if (DB->Debug_enabled ){
-        printf("getNodeContents :Fetching Contents from line %d to %d \n", beginning, end);
+        fprintf(stderr,"getNodeContents :Fetching Contents from line %d to %d \n", beginning, end);
     }
     struct StringList lines ;init_StringList(&lines,0);
     for(int i=beginning;i<end;i++) {
@@ -1048,7 +1048,7 @@ struct String * GetNodeContentsRaw(struct Database *DB, int nodeId )  {
 }
 struct String * GetNodeContents(struct Database *DB, int nodeId )  {
     while( DB->WriteLock) {
-        printf("Waiting for WriteLock-GetNodeContents\n");
+        fprintf(stderr,"Waiting for WriteLock-GetNodeContents\n");
     }
     struct String* Output=malloc(sizeof (struct String));init_String(Output,0);
     int beginning = NodeLine(DB, nodeId);
@@ -1088,7 +1088,7 @@ struct String * GetNodeContents(struct Database *DB, int nodeId )  {
 
 void NodeDebug(struct Database *DB, int nodeId )  {
     while( DB->WriteLock) {
-        printf("Waiting for WriteLock-GetNodeContents\n");
+        fprintf(stderr,"Waiting for WriteLock-GetNodeContents\n");
     }
 
     int beginning = NodeLine(DB, nodeId);
@@ -1209,19 +1209,19 @@ bool validatexml(struct String *contentStr ) {
     Sub_String(&contentlast,contentStr,lastindex,index);
     TrimSpaceString(&contentlast);
     if( contentlast.length > 0 ){
-        printf("\n%s\n",contentlast.charbuf);
+        fprintf(stderr,"\n%s\n",contentlast.charbuf);
         return false;
     }
     free_String(&contentlast);
 
     if (CommentStarted || xmldeclarationStarted || Comment2Started || CDATAStarted) {
-        printf("\nComment/xmldeclaration/CDATA session not closed\n");
+        fprintf(stderr,"\nComment/xmldeclaration/CDATA session not closed\n");
         return false;
     }
     if (nodesnames.length > 0) {
-        printf("\nNodes not closed\n");
+        fprintf(stderr,"\nNodes not closed\n");
         for(size_t i=0;i<nodesnames.length;i++) {
-            printf("\n%s\n",nodesnames.string[i].charbuf);
+            fprintf(stderr,"\n%s\n",nodesnames.string[i].charbuf);
         }
         return false;
     }
@@ -1417,7 +1417,7 @@ struct ResultStruct *UpdateNodevalue(struct Database *DB, int nodeId,char* new_v
     struct String new_value;init_String(&new_value,0);
     StringCharCpy(&new_value,new_valuechar);
     while( DB->WriteLock) {
-        printf("Waiting for WriteLock-UpdateNodevalue\n");
+        fprintf(stderr,"Waiting for WriteLock-UpdateNodevalue\n");
     }
 
     struct String Result;init_String(&Result,0);
@@ -1433,7 +1433,7 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     StringCharCpy(&value,valuechar);
     TrimSpaceString(&value);
     while( DB->WriteLock) {
-        printf("Waiting for WriteLock-UpdateAttributevalue\n");
+        fprintf(stderr,"Waiting for WriteLock-UpdateAttributevalue\n");
     }
     int beginning = NodeLine(DB, nodeId);
     struct String* content = Valueat(&DB->global_dbLines,beginning);//donot free
@@ -1562,7 +1562,7 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
 }
 struct VectorInt* RemoveNode(struct Database *DB, int nodeId) {
     while(DB->WriteLock) {
-        printf("Waiting for WriteLock-RemoveNode\n");
+        fprintf(stderr,"Waiting for WriteLock-RemoveNode\n");
     }
 
     struct VectorInt *nodes = malloc(sizeof(struct VectorInt));init_VectorInt(nodes,0);
@@ -1575,7 +1575,7 @@ struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlch
     struct String sub_xml;init_String(&sub_xml,0);
     StringCharCpy(&sub_xml,sub_xmlchar);
     while(DB->WriteLock) {
-        printf("Waiting for WriteLock-ReplaceNode\n");
+        fprintf(stderr,"Waiting for WriteLock-ReplaceNode\n");
     }
 
     if (DB->Debug_enabled) {
@@ -1667,7 +1667,7 @@ struct ResultStruct * AppendAfterNode(struct Database *DB, int nodeId,char* sub_
     struct String sub_xml;init_String(&sub_xml,0);
     StringCharCpy(&sub_xml,sub_xmlchar);
     while(DB->WriteLock) {
-        printf("Waiting for WriteLock-AppendAfterNode\n");
+        fprintf(stderr,"Waiting for WriteLock-AppendAfterNode\n");
     }
 
     if (!validatexml(&sub_xml) ){
@@ -1698,7 +1698,7 @@ struct ResultStruct * AppendBeforeNode(struct Database *DB, int nodeId,char* sub
     struct String sub_xml;init_String(&sub_xml,0);
     StringCharCpy(&sub_xml,sub_xmlchar);
     while(DB->WriteLock) {
-        printf("Waiting for WriteLock-AppendBeforeNode\n");
+        fprintf(stderr,"Waiting for WriteLock-AppendBeforeNode\n");
     }
 
     if (!validatexml(&sub_xml) ){
@@ -1967,7 +1967,7 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
 }
 int ParentNode(struct Database *DB,int nodeId)  {
     while( DB->WriteLock ){
-        printf("Waiting for WriteLock-ParentNode\n");
+        fprintf(stderr,"Waiting for WriteLock-ParentNode\n");
     }
     int LineNo = DB->nodeNoToLineno.items[nodeId];
     int ResultId = -1;
@@ -1992,7 +1992,7 @@ int ParentNode(struct Database *DB,int nodeId)  {
 struct VectorInt *ChildNodes(struct Database *DB,int nodeId) {
     struct VectorInt * ResultIds=malloc(sizeof (struct VectorInt)) ;init_VectorInt(ResultIds,0);
     while( DB->WriteLock ){
-        printf("Waiting for WriteLock-ChildNodes\n");
+        fprintf(stderr,"Waiting for WriteLock-ChildNodes\n");
     }
     int LineNo = DB->nodeNoToLineno.items[nodeId];
     if (nodeId < 0) {
@@ -2117,7 +2117,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     ResultSend->Error=NULL;
     // ldld/dkdicmk/<xe>/kjk[]/lkl/
     while( DB->WriteLock ){
-        printf("Waiting for WriteLock-GetNode\n");
+        fprintf(stderr,"Waiting for WriteLock-GetNode\n");
     }
     if (DB->Debug_enabled ){
 
@@ -2261,11 +2261,11 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
 struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  {
     struct String* Error=malloc(sizeof (struct String)); init_String(Error,0);
     while(DB->WriteLock) {
-        printf("Waiting for WriteLock-CutPasteAsSubNode\n");
+        fprintf(stderr,"Waiting for WriteLock-CutPasteAsSubNode\n");
     }
     int previousparentid = ParentNode(DB, nodeId);
     if (previousparentid == -1 ){
-        printf("\nNode doesnot exists");
+        fprintf(stderr,"\nNode doesnot exists");
         StringCharCpy(Error,"Node doesnot exists");
         return Error;
     }
@@ -2315,7 +2315,7 @@ struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  
             NewParentNodeisEmpty = true;
             ReplcSubstring(dbLine, "/>", ">");
         } else {
-            printf("\nNode is a lowest node , not a nil node");
+            fprintf(stderr,"\nNode is a lowest node , not a nil node");
             StringCharCpy(Error," Node is a lowest node , not a nil node");
             return Error;
         }
@@ -2388,7 +2388,7 @@ struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  
         DB->Nodeendlookup.items[UnderId] = DB->global_lineLastUniqueid;
         DB->global_lineLastUniqueid++;
         if (DB->global_lineLastUniqueid >= DB->maxInt ){
-            printf("load_db: Total no. of Uniqueid>= DB.MaxNooflines, Please increase DB.MaxNooflines before loading db");
+            fprintf(stderr,"load_db: Total no. of Uniqueid>= DB.MaxNooflines, Please increase DB.MaxNooflines before loading db");
             exit(1);
         }
     }
