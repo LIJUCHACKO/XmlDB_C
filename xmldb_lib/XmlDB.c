@@ -737,7 +737,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                     lastindex = index + 1;
                     ///
                     ReplcSubstring(&attributebuffer,"\"\"", "\"");
-                    int node = fill_DBdata(DB, &nodeStart, &valuebuffer, &attributebuffer, &parts.string[0], 2);
+                    int node = fill_DBdata(DB, &nodeStart, &valuebuffer, &attributebuffer, &NodeName, 2);
                     if ( DB->startindex >= 0 ){
                         appendto_VectorInt(nodes,node);
                     }
