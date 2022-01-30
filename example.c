@@ -87,7 +87,8 @@ int main()
 
     NodeDebug(DB,0);
      printf("\n---------\n");
-    CutPasteAsSubNode(DB,8,1);
+     //9 is <body> 1 is <head> -see debug output
+     CutPasteAsSubNode(DB,9,1);
     NodeDebug(DB,0);
     SaveAs_DB(DB, "sample_mod.html" ) ;
     free(DB);

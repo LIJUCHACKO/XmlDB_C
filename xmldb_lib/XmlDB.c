@@ -1191,11 +1191,15 @@ bool validatexml(struct String *contentStr ) {
                     TrimSpaceString(&contentlast);
                     if (nodeEnded) {
                         if( nodesnames.length == 0 ){
+                            free_StringList(&nodesnames);
+                            free_String(&contentlast);
                             return false;
                         }
                         TrimSpaceString(&nodesnames.string[nodesnames.length-1]);
 
                         if(strcmp(nodesnames.string[nodesnames.length-1].charbuf,contentlast.charbuf)!=0){
+                            free_StringList(&nodesnames);
+                            free_String(&contentlast);
                             return false;
                         }
                         removeFrom_StringList(&nodesnames,nodesnames.length-1);
@@ -1220,12 +1224,15 @@ bool validatexml(struct String *contentStr ) {
     TrimSpaceString(&contentlast);
     if( contentlast.length > 0 ){
         fprintf(stderr,"\n%s\n",contentlast.charbuf);
+        free_StringList(&nodesnames);
+        free_String(&contentlast);
         return false;
     }
     free_String(&contentlast);
 
     if (CommentStarted || xmldeclarationStarted || Comment2Started || CDATAStarted) {
         fprintf(stderr,"\nComment/xmldeclaration/CDATA session not closed\n");
+        free_StringList(&nodesnames);
         return false;
     }
     if (nodesnames.length > 0) {
@@ -1233,8 +1240,10 @@ bool validatexml(struct String *contentStr ) {
         for(size_t i=0;i<nodesnames.length;i++) {
             fprintf(stderr,"\n%s\n",nodesnames.string[i].charbuf);
         }
+        free_StringList(&nodesnames);
         return false;
     }
+    free_StringList(&nodesnames);
     return true;
 }
 static void remove_Node(struct VectorInt *removedids, struct Database *DB, int nodeId)  {
@@ -1249,7 +1258,7 @@ static void remove_Node(struct VectorInt *removedids, struct Database *DB, int n
     DB->startindex = startindex;
     DB->WriteLock = true;
     for (int i = startindex; i < end; i++ ){
-        struct String *path = Valueat(&DB->global_paths,startindex);
+        struct String *path = Valueat(&DB->global_paths,startindex);//do not free
         struct StringList path_parts;init_StringList(&path_parts,0);
         String_Split(&path_parts,path, "/");
         if(strcmp(path_parts.string[path_parts.length-1].charbuf,"~")!=0){
@@ -1283,7 +1292,7 @@ static struct ResultStruct * insertAtLine(struct Database *DB, int lineno,struct
     int startindex_tmp = lineno;
     if (lineno >0 ){
         DB->reference_linenotoinsert = lineno - 1;
-        struct String  *path_tmp = Valueat(&DB->global_paths,lineno-1);
+        struct String  *path_tmp = Valueat(&DB->global_paths,lineno-1);//donot free
         struct String  path;init_String(&path,0);
         StringStringCpy(&path,path_tmp);
         if (( path.charbuf[path.length-2]=='/') &&  (path.charbuf[path.length-1]=='~')){
@@ -1296,7 +1305,9 @@ static struct ResultStruct * insertAtLine(struct Database *DB, int lineno,struct
             TrimRightString(&path,path_parts.string[path_parts.length-1].length+1);
             free_StringList(&path_parts);
         }
+
         StringStringCpy(&DB->path, &path);
+        free_String(&path);
     }else{
         DB->reference_linenotoinsert=0;
         clear_String(&DB->path);
@@ -1375,6 +1386,7 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
         init_StringList(&ResultSend->labelvalues,0);
+        free_StringReturn(content);
         return ResultSend;
     }
     struct String *value = GetNodeValue(DB, nodeId);
@@ -1434,6 +1446,7 @@ struct ResultStruct *UpdateNodevalue(struct Database *DB, int nodeId,char* new_v
     ReplacewithHTMLSpecialEntities(&Result,&new_value);
     struct ResultStruct* ResultSend=  update_nodevalue(DB, nodeId, &Result);
     free_String(&Result);
+    free_String(&new_value);
     return  ResultSend;
 }
 struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char* labelchar ,char* valuechar ) {
@@ -1460,6 +1473,8 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
         init_StringList(&ResultSend->labelvalues,0);
+        free_String(&label);
+        free_String(&value);
         return ResultSend;
     }
     struct StringList contentparts ;init_StringList(&contentparts,0);
@@ -1484,7 +1499,7 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     }
 
 
-    struct String *contentparts0= &contentparts.string[0];
+    struct String *contentparts0= &contentparts.string[0];//don't free
 
     if (strstr(contentparts0->charbuf, labelcpy.charbuf)!=NULL) {
         struct String* oldvalue = GetNodeAttribute(DB, nodeId, labelchar);
@@ -1556,12 +1571,15 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
         printf("%s\n", NodeContents->charbuf);
         free_StringReturn(NodeContents);
     }
+    free_String(&label);
+    free_String(&value);
     free_StringList(&parts);
     free_String(&attributebuffer);
     free_StringList(&contentparts);
     free_String(&newlabelvalue);
     free_String(&oldlabelvalue);
     free_String(&labelcpy);
+    free_String(&contentnew);
     //printf("\npPASSED\n");
     struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
     ResultSend->Error=NULL;
@@ -1599,6 +1617,7 @@ struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlch
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
         init_StringList(&ResultSend->labelvalues,0);
+        free_String(&sub_xml);
         return ResultSend;
     }
     int startindex = NodeLine(DB, nodeId);
@@ -1610,6 +1629,7 @@ struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlch
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
         init_StringList(&ResultSend->labelvalues,0);
+        free_String(&sub_xml);
         return ResultSend;
     }
     struct VectorInt rmids ;init_VectorInt(&rmids,0);
@@ -1617,6 +1637,7 @@ struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlch
     if (rmids.length > 0) {
         struct ResultStruct* ResultSend= insertAtLine(DB, startindex, &sub_xml, -1);
         free_VectorInt(&rmids);
+        free_String(&sub_xml);
         return ResultSend;
     }
     free_VectorInt(&rmids);
@@ -1626,6 +1647,7 @@ struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlch
     ResultSend->Error=error;
     init_VectorInt(&ResultSend->nodeids,0);
     init_StringList(&ResultSend->labelvalues,0);
+    free_String(&sub_xml);
     return ResultSend;
 }
 bool IslowestNode(struct Database *DB, int nodeId){
@@ -1651,6 +1673,7 @@ struct ResultStruct * InserSubNode(struct Database *DB, int nodeId,char* sub_xml
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
         init_StringList(&ResultSend->labelvalues,0);
+        free_String(&sub_xml);
         return ResultSend;
     }
 
@@ -1658,6 +1681,7 @@ struct ResultStruct * InserSubNode(struct Database *DB, int nodeId,char* sub_xml
     if ((end - NodeLine(DB, nodeId)) == 1 ){
         struct ResultStruct *result=update_nodevalue(DB, nodeId, &sub_xml);
         removefrom_VectorInt(&result->nodeids,0);
+        free_String(&sub_xml);
         return result;
     }
     if (end < 0 ){
@@ -1668,9 +1692,12 @@ struct ResultStruct * InserSubNode(struct Database *DB, int nodeId,char* sub_xml
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
         init_StringList(&ResultSend->labelvalues,0);
+        free_String(&sub_xml);
         return ResultSend;
     }
-    return insertAtLine(DB, end-1, &sub_xml, -1);
+    struct ResultStruct* ResultSend= insertAtLine(DB, end-1, &sub_xml, -1);
+    free_String(&sub_xml);
+    return ResultSend;
 
 }
 struct ResultStruct * AppendAfterNode(struct Database *DB, int nodeId,char* sub_xmlchar ) {
@@ -1688,6 +1715,7 @@ struct ResultStruct * AppendAfterNode(struct Database *DB, int nodeId,char* sub_
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
         init_StringList(&ResultSend->labelvalues,0);
+        free_String(&sub_xml);
         return ResultSend;
 
     }
@@ -1700,9 +1728,12 @@ struct ResultStruct * AppendAfterNode(struct Database *DB, int nodeId,char* sub_
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
         init_StringList(&ResultSend->labelvalues,0);
+        free_String(&sub_xml);
         return ResultSend;
     }
-    return insertAtLine(DB, end, &sub_xml, -1);
+     struct ResultStruct* ResultSend=  insertAtLine(DB, end, &sub_xml, -1);
+     free_String(&sub_xml);
+     return ResultSend;
 }
 struct ResultStruct * AppendBeforeNode(struct Database *DB, int nodeId,char* sub_xmlchar )  {
     struct String sub_xml;init_String(&sub_xml,0);
@@ -1719,6 +1750,7 @@ struct ResultStruct * AppendBeforeNode(struct Database *DB, int nodeId,char* sub
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
         init_StringList(&ResultSend->labelvalues,0);
+        free_String(&sub_xml);
         return ResultSend;
 
     }
@@ -1731,9 +1763,12 @@ struct ResultStruct * AppendBeforeNode(struct Database *DB, int nodeId,char* sub
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
         init_StringList(&ResultSend->labelvalues,0);
+        free_String(&sub_xml);
         return ResultSend;
     }
-    return insertAtLine(DB, start, &sub_xml, -1);
+    struct ResultStruct* ResultSend= insertAtLine(DB, start, &sub_xml, -1);
+    free_String(&sub_xml);
+    return ResultSend;
 
 }
 int LocateRequireParentdNode(struct Database *DB ,int parent_nodeLine ,struct String* RequiredPath ,int LineNo_inp )  {
@@ -1987,7 +2022,7 @@ int ParentNode(struct Database *DB,int nodeId)  {
     if (LineNo < 0) {
         return ResultId;
     }
-    struct String *NodePath = Valueat(&DB->global_paths,LineNo);
+    struct String *NodePath = Valueat(&DB->global_paths,LineNo);//donot free
     struct StringList parts;init_StringList(&parts,0);
     String_Split(&parts,NodePath, "/");
 
@@ -1995,7 +2030,8 @@ int ParentNode(struct Database *DB,int nodeId)  {
     Sub_String(&RequiredPath, NodePath,0 , NodePath->length-parts.string[parts.length-1].length-1);
 
     ResultId= LocateRequireParentdNode(DB,NodeLine(DB,0), &RequiredPath, LineNo);
-
+    free_String(&RequiredPath);
+    free_StringList(&parts);
     return ResultId;;
 }
 
@@ -2011,7 +2047,7 @@ struct VectorInt *ChildNodes(struct Database *DB,int nodeId) {
     if (LineNo < 0) {
         return ResultIds;
     }
-    struct String *NodePath = Valueat(&DB->global_paths,LineNo);
+    struct String *NodePath = Valueat(&DB->global_paths,LineNo);//donot free
     struct StringList Nodepathparts;init_StringList(&Nodepathparts,0);
     String_Split(&Nodepathparts,NodePath, "/");
     size_t nodeDepth = Nodepathparts.length;
@@ -2048,7 +2084,7 @@ int NextNode(struct Database *DB,int nodeId) {
     }
     struct StringList Nodepathparts;init_StringList(&Nodepathparts,0);
 
-    struct String *NodePath = Valueat(&DB->global_paths,LineNo);
+    struct String *NodePath = Valueat(&DB->global_paths,LineNo);//donot free
     String_Split(&Nodepathparts,NodePath, "/");
     int nodeDepth = Nodepathparts.length;
 
@@ -2058,10 +2094,12 @@ int NextNode(struct Database *DB,int nodeId) {
     String_Split(&Nodepathparts,nextNodePath, "/");
     int nextnodeDepth = Nodepathparts.length;
 
-    free_StringList(&Nodepathparts);
+   
     if(strcmp(Nodepathparts.string[Nodepathparts.length-1].charbuf,"~")==0){
+        free_StringList(&Nodepathparts);
         return -1;
     }
+    free_StringList(&Nodepathparts);
     int nextnodeid=DB->global_ids.items[Node_end];
 
     if (nodeDepth == nextnodeDepth) {
