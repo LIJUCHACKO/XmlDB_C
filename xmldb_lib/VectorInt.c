@@ -4,7 +4,8 @@ void init_VectorInt(struct VectorInt* v,size_t size){
     if(size<1){
         size=1;
     }
-    v->items = (int*) malloc(size * sizeof(int));
+    //initialsed because some variables use it as static array
+    v->items = (int*) calloc(size , sizeof(int));
     v->size=size;
     v->length=0;
     v->items[0]=-1;

@@ -9,6 +9,7 @@ void init_SegmentedStringList(struct SegmentedStringList *v){
 }
 
 void free_SegmentedStringList(struct SegmentedStringList *vect){
+    //lastsegment is size -1
     for(size_t i=0;i<=vect->lastSegment;i++){
         free_StringList(&vect->Segments[i]);
     }
