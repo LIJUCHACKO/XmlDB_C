@@ -277,15 +277,15 @@ static bool isParentPath(struct String* parentp,struct String* nodep )  {
     return false;
 }
 static int stringtono(struct Database *DB, struct String* line )  {
-    int total = 0;
+    int hash = 0;
     char* charbuf=line->charbuf;
     for (size_t i=0;i< line->length;i++) {
-        total = total + ((int)charbuf[i])*i;
+        hash = hash + (hash<<5) + ((int)charbuf[i])*i;
     }
-    if (total >= DB->maxHashValue) {
-        total = total - DB->maxHashValue;
+    if (hash >= DB->maxHashValue) {
+        hash = hash % DB->maxHashValue;
     }
-    return total;
+    return hash;
 }
 
 void free_suspectedLinenos_Result(struct suspectedLinenos_Result * v){
@@ -843,7 +843,7 @@ struct Database* init_Database(int maxNoofLines){
     DB->maxInt = maxNoofLines;
     init_VectorInt(&DB->deleted_ids,10);
     init_VectorInt(&DB->nodeNoToLineno, DB->maxInt);/*fixed size*/
-    DB->maxHashValue=DB->maxInt/10;
+    DB->maxHashValue=97343;
     init_hashtable(&DB->pathKeylookup, DB->maxHashValue);/*fixed size*/
     init_VectorInt(&DB->Nodeendlookup, DB->maxInt);/*fixed size*/
     DB->startindex = -1;
