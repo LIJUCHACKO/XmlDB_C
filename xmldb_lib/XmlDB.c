@@ -30,6 +30,8 @@ static void readLines(struct String *Lines, char *path) {
 
         read = getline(&line, &len, fp);
     }
+    free(line);
+    return ;
 }
 struct VectorInt* Get_common(struct VectorInt* set1 ,struct VectorInt*  set2 )  {
     struct VectorInt* result = malloc(sizeof (struct VectorInt));
@@ -257,6 +259,7 @@ static bool isParentPath(struct String* parentp,struct String* nodep )  {
         Sub_String(&nodep0_lenparentp,nodep,0,parentp->length);
         if (strcmp(nodep0_lenparentp.charbuf , parentp->charbuf)==0) {
             if (strcmp(nodep->charbuf, parentp->charbuf) == 0 ){
+                free_String(&nodep0_lenparentp);
                 return true;
             } else if( nodep->length > parentp->length) {
                 struct String nodep0_lenparentp1;init_String(&nodep0_lenparentp1,0);
@@ -265,6 +268,9 @@ static bool isParentPath(struct String* parentp,struct String* nodep )  {
                 StringStringCpy(&parentp1,parentp);
                 StringCharConcat(&parentp1,"/");
                 if (strcmp(nodep0_lenparentp1.charbuf, parentp1.charbuf)==0) {
+                    free_String(&nodep0_lenparentp);
+                    free_String(&parentp1);
+                    free_String(&nodep0_lenparentp1);
                     return true;
                 }
                 free_String(&parentp1);
@@ -965,6 +971,7 @@ struct String* GetNodeAttribute(struct Database *DB ,int nodeId ,char* labelchar
     int LineNo = DB->nodeNoToLineno.items[nodeId];
     if (LineNo < 0 ){
         fprintf(stderr,"Warning :node  doesnot exist\n");
+        free_String(&label);
         return NULL;
     }
     struct StringList attributes ;init_StringList(&attributes,0);
@@ -979,6 +986,9 @@ struct String* GetNodeAttribute(struct Database *DB ,int nodeId ,char* labelchar
             if (strcmp(LabelValue.string[0].charbuf ,label.charbuf)==0) {
                 StringStringCpy(content,&LabelValue.string[1]);
                 TrimRightString(content,1);//to remove "
+                free_String(&label);
+                free_StringList(&attributes);
+                free_StringList(&LabelValue);
                 return content;
             }
         }

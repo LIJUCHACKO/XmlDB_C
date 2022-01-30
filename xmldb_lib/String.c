@@ -161,12 +161,18 @@ void TrimSpaceString(struct String *src_dest){
     int last=src_dest->length-1;
 
     //scan forward from begining
-    while(isspace(src_dest->charbuf[from]) && (from<last)){
+    while(from<last){
+        if(!isspace(src_dest->charbuf[from])){
+            break;
+        }
         from++;
     }
 
     //scan backward from end
-    while(isspace(src_dest->charbuf[last]) && (from<=last)){
+    while(from<=last){
+        if(!isspace(src_dest->charbuf[last])){
+            break;
+        }
         last--;
     }
     memmove(src_dest->charbuf,src_dest->charbuf+from,last-from+1);
