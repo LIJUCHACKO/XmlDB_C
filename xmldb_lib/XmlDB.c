@@ -31,6 +31,7 @@ static void readLines(struct String *Lines, char *path) {
         read = getline(&line, &len, fp);
     }
     free(line);
+    fclose(fp);
     return ;
 }
 struct VectorInt* Get_common(struct VectorInt* set1 ,struct VectorInt*  set2 )  {
@@ -287,8 +288,6 @@ static int stringtono(struct Database *DB, struct String* line )  {
     char* charbuf=line->charbuf;
     for (size_t i=0;i< line->length;i++) {
         hash = hash + (hash<<5) + ((int)charbuf[i])*i;
-    }
-    if (hash >= DB->maxHashValue) {
         hash = hash % DB->maxHashValue;
     }
     return hash;
