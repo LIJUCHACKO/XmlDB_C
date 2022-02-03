@@ -5,7 +5,8 @@ static void readLines(struct String *Lines, char *path) {
     FILE *fp = fopen(path, "r");
     if (fp == NULL){
         fprintf(stderr,"\nCannot open file %s",path);
-        return ;
+        exit(1);
+        //return ;
     }
     char * line = NULL;
     size_t len = 0;
@@ -631,7 +632,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
         }
         if (content[index] == '>') {
             if (CommentStarted) {
-                if (content[index-1] == '-' ){
+                if ((content[index-1] == '-' ) && (content[index-2] == '-' )) {
                     StringStringCpypart(&buffer1,contentStr,lastindex,index+1);
                     StringStringCpy(&buffer3,&buffer1);
                     TrimSpaceString(&buffer3);
@@ -652,7 +653,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                 }
             } else if (CDATAStarted) {
                 //comparestringBackward(line, "]]>")
-                if (content[index-1] == ']') {
+                if ((content[index-1] == ']') && (content[index-2] == ']')) {
                     StringStringCpypart(&buffer1,contentStr,lastindex,index+1);
                     StringStringCpy(&buffer3,&buffer1);
                     TrimSpaceString(&buffer3);
@@ -1163,12 +1164,12 @@ bool validatexml(struct String *contentStr ) {
         }
         if (content[index] == '>') {
             if (CommentStarted) {
-                if (content[index-1] == '-') {
+                if ((content[index-1] == '-') && (content[index-2] == '-')) {
                     CommentStarted = false;
                     lastindex = index + 1;
                 }
             } else if (CDATAStarted) {
-                if (content[index-1] == ']') {
+                if ((content[index-1] == ']') && (content[index-2] == ']')) {
                     lastindex = index + 1;
                     CDATAStarted = false;
                 }
