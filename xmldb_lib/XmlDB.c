@@ -494,6 +494,7 @@ static int fill_DBdata(struct Database *DB, struct String* dbline,struct String*
     if (unique_id >= 0 ){
         if (mode < 3 ){
             int Node_hash = stringtono(DB, NodeName);
+            DB->nodeNoToLineno.items[unique_id] = DB->reference_linenotoinsert;//will be updated by updateNodenoLineMap()
             insertid_intohashtable(&DB->pathKeylookup, Node_hash, unique_id,DB->reference_linenotoinsert,&DB->nodeNoToLineno);
         }
         if (mode == 1 ){
@@ -823,12 +824,16 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
     }
     free_String(&contentlast);
     if (CommentStarted || xmldeclarationStarted || Comment2Started || CDATAStarted) {
-        fprintf(stderr,"xml is corrupt");
+        fprintf(stderr,"xml is corrupt\n");
         exit(1);
     }
     TrimSpaceString(&nodeStart);
     if( nodeStart.length > 0 ){
-        fprintf(stderr,"xml is corrupt");
+        fprintf(stderr,"xml is corrupt\n");
+        exit(1);
+    }
+    if(DB->Nodeendlookup.items[0]<0){
+        fprintf(stderr,"xml is corrupt\n");
         exit(1);
     }
     free_String(&buffer1);
