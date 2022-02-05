@@ -637,7 +637,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                     StringStringCpypart(&buffer1,contentStr,lastindex,index+1);
                     StringStringCpy(&buffer3,&buffer1);
                     TrimSpaceString(&buffer3);
-                    //comparestringBackward(line, "->")
+                    //comparestringBackward(line, "-->")
                     CommentStarted = false;
                     lastindex = index + 1;
                     if (buffer3.length > 0) {
@@ -819,7 +819,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
     Sub_String(&contentlast,contentStr,lastindex,index);
     TrimSpaceString(&contentlast);
     if( contentlast.length > 0 ){
-        fprintf(stderr,"xml is corrupt");
+        fprintf(stderr,"xml is corrupt\n");
         exit(1);
     }
     free_String(&contentlast);

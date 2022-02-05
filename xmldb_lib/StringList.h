@@ -21,4 +21,5 @@ void removeFrom_StringList(struct StringList *src_dest, size_t index);
 void String_Split(struct StringList *result ,struct String *string, char* Separator);
 void clear_StringList(struct StringList *vect);
 void free_StringListReturn(struct StringList *vect);
+int indexof(struct StringList *vect,struct String *String);
 #endif
