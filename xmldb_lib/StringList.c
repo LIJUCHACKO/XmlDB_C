@@ -98,9 +98,9 @@ void String_Split(struct StringList *result ,struct String *string, char* Separa
     free_String(&buffer);
 }
 
-int indexof(struct StringList *vect,struct String *String){
+int StringListIndexOf(struct StringList *vect,struct String *String){
     for(int i=0;i<vect->length;i++){
-        if(strcmp(vect->string->charbuf,String->charbuf)==0){
+        if(strcmp(vect->string[i].charbuf,String->charbuf)==0){
             return i;
         }
     }
