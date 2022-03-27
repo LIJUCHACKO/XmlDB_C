@@ -1,8 +1,16 @@
+/*
+** This file is the part of XmlDBlib project, an easy to use xmlparser written from scratch.
+**
+** The author disclaims copyright to this source code.  In place of
+** a legal notice, here is a blessing:
+**    May you share freely, never taking more than you give.
+**
+*/
 #ifndef VECTORINT
 #define VECTORINT
 #include<malloc.h>
 #include<memory.h>
-
+#include <stdio.h>
 struct VectorInt{
     size_t length;
     size_t size;

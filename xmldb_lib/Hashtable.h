@@ -1,9 +1,17 @@
- 
+/*
+** This file is the part of XmlDBlib project, an easy to use xmlparser written from scratch.
+**
+** The author disclaims copyright to this source code.  In place of
+** a legal notice, here is a blessing:
+**    May you share freely, never taking more than you give.
+**
+*/
 #ifndef HASHTABLE
 #define HASHTABLE
 #include<memory.h>
 #include "VectorInt.h"
 #include "stdbool.h"
+#include <stdio.h>
 struct Hashtable{
     int size;
     struct VectorInt* lists;

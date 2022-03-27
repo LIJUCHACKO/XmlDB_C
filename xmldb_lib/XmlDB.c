@@ -1,4 +1,11 @@
-
+/*
+** This file is the part of XmlDBlib project, an easy to use xmlparser written from scratch.
+**
+** The author disclaims copyright to this source code.  In place of
+** a legal notice, here is a blessing:
+**    May you share freely, never taking more than you give.
+**
+*/
 #include "XmlDB.h"
 
 static void readLines(struct String *Lines, char *path) {
@@ -8,6 +15,7 @@ static void readLines(struct String *Lines, char *path) {
         exit(1);
         //return ;
     }
+#if defined(__linux__)
     char * line = NULL;
     size_t len = 0;
     ssize_t read;
@@ -32,11 +40,34 @@ static void readLines(struct String *Lines, char *path) {
         read = getline(&line, &len, fp);
     }
     free(line);
+#else
+    char line[3000];
+    while(fgets(line,3000,fp)){
+        size_t from=0;
+        size_t linelengt=strlen(line);
+        size_t last=linelengt-1;
+        //scan forward from begining
+        while((line[from]=='\r'||line[from]=='\n') && (from<last)){
+            from++;
+        }
+
+        //scan backward from end
+        while((line[last]=='\r'||line[last]=='\n')  && (from<=last)){
+            last--;
+        }
+        line[last+1]='\0';
+        StringNCharConcat(Lines,line+from,last-from+1);
+    }
+ #endif
     fclose(fp);
     return ;
 }
 struct VectorInt* Get_common(struct VectorInt* set1 ,struct VectorInt*  set2 )  {
     struct VectorInt* result = malloc(sizeof (struct VectorInt));
+    if(result==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     init_VectorInt(result,0);
     for(size_t i=0;i<set1->length;i++){
         int element1=set1->items[i];
@@ -88,6 +119,7 @@ static bool writeLines(struct Database *DB ,char* path )  {
     struct String buffer;
     init_String(&buffer,10);
     size_t seg=0;
+    struct StringList NewLines; init_StringList(&NewLines,0);
     while(seg<= DB->global_dbLines.lastSegment){
         for(size_t i=0;i<DB->global_dbLines.Segments[seg].length;i++){
             struct String *line=&DB->global_dbLines.Segments[seg].string[i];
@@ -95,17 +127,31 @@ static bool writeLines(struct Database *DB ,char* path )  {
             StringStringCpy(&buffer,line);
             ReplcSubstring(&buffer,"<nil:node>","");
             ReplcSubstring(&buffer,"</nil:node>","");
-            StringCharConcat(&buffer,"\n");
-            fwrite(buffer.charbuf , sizeof(char) , buffer.length , fp );
+            appendto_StringList(&NewLines,&buffer);
+            //StringCharConcat(&buffer,"\n");
+            //fwrite(buffer.charbuf , sizeof(char) , buffer.length , fp );
         }
         seg++;
     }
+    struct StringList NewLines2; init_StringList(&NewLines2,0);
+    formatxml(&NewLines2,&NewLines);
+    for(size_t i=0;i<NewLines2.length;i++){
+        StringCharConcat(&NewLines2.string[i],"\n");
+        fwrite(NewLines2.string[i].charbuf, sizeof(char) , NewLines2.string[i].length , fp );
+    }
+    free_StringList(&NewLines2);
+    free_StringList(&NewLines);
     free_String(&buffer);
     fclose(fp);
     return true;
 }
 struct String *Dump_DB(struct Database *DB){
-    struct String *content=malloc(sizeof (struct String));init_String(content,0);
+    struct String *content=malloc(sizeof (struct String));
+    if(content==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
+    init_String(content,0);
     struct String buffer;
     init_String(&buffer,10);
     size_t seg=0;
@@ -185,6 +231,10 @@ void free_compare_path_Result(struct compare_path_Result * v){
 }
 static struct compare_path_Result * compare_path(struct String* current_path ,struct String* reference_path )  {
     struct compare_path_Result* Result=malloc(sizeof(struct compare_path_Result));
+    if(Result==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     struct StringList ref_pathParts;init_StringList(&ref_pathParts,0);
     struct StringList cur_pathParts;init_StringList(&cur_pathParts,0);
     String_Split(&ref_pathParts,reference_path, "/");
@@ -301,6 +351,10 @@ void free_suspectedLinenos_Result(struct suspectedLinenos_Result * v){
 }
 static struct suspectedLinenos_Result *suspectedLinenos(struct Database *DB, struct String *path, int lowerbound , int upperbound) {
     struct suspectedLinenos_Result* Result=malloc(sizeof(struct suspectedLinenos_Result));
+    if(Result==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     struct StringList pathParts  ; init_StringList(&pathParts,0);
     String_Split(&pathParts,path, "/");
     struct VectorInt NodeNos ; init_VectorInt(&NodeNos,0);
@@ -376,7 +430,7 @@ int NodeLine(struct Database *DB, int nodeId )  {
     }
     int lineno = DB->nodeNoToLineno.items[nodeId];
     if (lineno < 0 ){
-        fprintf(stderr,"Warning :node  doesnot exist\n");
+        fprintf(stderr,"NodeLine-:Warning :node  doesnot exist-%d\n",nodeId);
         lineno = -1;
     }
     return lineno;
@@ -387,7 +441,7 @@ int NodeEnd(struct Database *DB, int nodeId )  {
     }
     int lineno = DB->nodeNoToLineno.items[nodeId];
     if (lineno < 0) {
-        fprintf(stderr,"Warning :node  doesnot exist\n");
+        fprintf(stderr,"NodeEnd-:Warning :node  doesnot exist-%d\n",nodeId);
         return -1;
     }
 
@@ -396,7 +450,7 @@ int NodeEnd(struct Database *DB, int nodeId )  {
         lineno = DB->nodeNoToLineno.items[DB->Nodeendlookup.items[nodeId]] + 1;
 
     } else {
-        fprintf(stderr,"Warning :node  doesnot exist\n");
+        fprintf(stderr,"NodeEnd-:Warning :node  doesnot exist-%d\n",nodeId);
         lineno = -1;
     }
     return lineno;
@@ -454,7 +508,7 @@ static int fill_DBdata(struct Database *DB, struct String* dbline,struct String*
 
         DB->global_lineLastUniqueid++;
         if (DB->global_lineLastUniqueid >= DB->maxInt ){
-            printf("load_db: Total no. of Uniqueid>= DB->MaxNooflines, Please increase DB->MaxNooflines before loading db");
+            fprintf(stderr,"load_db: Total no. of Uniqueid>= DB->MaxNooflines, Please increase DB->MaxNooflines before loading db");
             exit(1);
         }
     } else {
@@ -845,8 +899,14 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
     free_String(&valuebuffer);
     free_String(&NodeName);
 }
+
+/*memory allocation is also done for you*/
 struct Database* init_Database(int maxNoofLines){
     struct Database* DB=malloc(sizeof(struct Database));
+    if(DB==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     if (maxNoofLines < 99999) {
         maxNoofLines = 99999;
     }
@@ -969,7 +1029,12 @@ bool Load_db(struct Database *DB , char* filename) {
 struct String* GetNodeAttribute(struct Database *DB ,int nodeId ,char* labelchar )  {
     struct String label;init_String(&label,0);
     StringCharCpy(&label,labelchar);
-    struct String *content=malloc(sizeof (struct String));init_String(content,0);
+    struct String *content=malloc(sizeof (struct String));
+    if(content==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
+    init_String(content,0);
     while( DB->WriteLock) {
         fprintf(stderr,"Waiting for WriteLock-GetNodeAttribute\n");
     }
@@ -1004,7 +1069,12 @@ struct String* GetNodeAttribute(struct Database *DB ,int nodeId ,char* labelchar
     return content;
 }
 struct String *GetNodeValue(struct Database *DB ,int nodeId)  {
-    struct String* content=malloc(sizeof (struct String));init_String(content,0);
+    struct String* content=malloc(sizeof (struct String));
+    if(content==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
+    init_String(content,0);
     while( DB->WriteLock) {
         fprintf(stderr,"Waiting for WriteLock-GetNodeValue\n");
     }
@@ -1017,7 +1087,12 @@ struct String *GetNodeValue(struct Database *DB ,int nodeId)  {
     return content;
 }
 struct String * GetNodeName(struct Database *DB, int nodeId )  {
-    struct String* content=malloc(sizeof (struct String));init_String(content,0);
+    struct String* content=malloc(sizeof (struct String));
+    if(content==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
+    init_String(content,0);
     while( DB->WriteLock) {
         fprintf(stderr,"Waiting for WriteLock-GetNodeName\n");
     }
@@ -1036,7 +1111,12 @@ struct String * GetNodeContentsRaw(struct Database *DB, int nodeId )  {
     while( DB->WriteLock) {
         fprintf(stderr,"Waiting for WriteLock-GetNodeContents\n");
     }
-    struct String* Output=malloc(sizeof (struct String));init_String(Output,0);
+    struct String* Output=malloc(sizeof (struct String));
+    if(Output==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
+    init_String(Output,0);
     int beginning = NodeLine(DB, nodeId);
     if (beginning < 0) {
         return Output;
@@ -1065,7 +1145,12 @@ struct String * GetNodeContents(struct Database *DB, int nodeId )  {
     while( DB->WriteLock) {
         fprintf(stderr,"Waiting for WriteLock-GetNodeContents\n");
     }
-    struct String* Output=malloc(sizeof (struct String));init_String(Output,0);
+    struct String* Output=malloc(sizeof (struct String));
+    if(Output==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
+    init_String(Output,0);
     int beginning = NodeLine(DB, nodeId);
     if (beginning < 0) {
         return Output;
@@ -1287,6 +1372,10 @@ static void remove_Node(struct VectorInt *removedids, struct Database *DB, int n
 
 static struct ResultStruct * insertAtLine(struct Database *DB, int lineno,struct String * sub_xml ,int retainid ) {
     struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+    if(ResultSend==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     init_VectorInt(&ResultSend->nodeids,0);
     ResultSend->Error=NULL;
     init_StringList(&ResultSend->labelvalues,0);
@@ -1324,6 +1413,10 @@ static struct ResultStruct * insertAtLine(struct Database *DB, int lineno,struct
     if (!validatexml(sub_xml)) {
         fprintf(stderr,"\n xml content is not proper- aborting insertion");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"xml content is not proper- aborting insertion");
         ResultSend->Error=error;
         return ResultSend;
@@ -1343,7 +1436,15 @@ static struct ResultStruct * replaceNodeRetainid(struct Database *DB, int nodeId
     if (!validatexml(sub_xml)) {
         fprintf(stderr,"\n xml content is not proper- aborting replacing");
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"xml content is not proper- aborting replacing");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1354,7 +1455,15 @@ static struct ResultStruct * replaceNodeRetainid(struct Database *DB, int nodeId
     if(startindex<0){
         fprintf(stderr,"\n Node doesnot exist");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"Node doesnot exist");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1372,8 +1481,16 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
     int Nooflines=NodeEnd(DB, nodeId) - NodeLine(DB, nodeId);
     if (Nooflines > 2) {
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         fprintf(stderr,"\nError :Cannot update value- Node contains subnodes\n");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"node  doesnot exist");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1385,8 +1502,16 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
     ReplcSubstring(content,"><",">-<");//for strtok
     if (content->length == 0) {
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         fprintf(stderr,"Warning :node  doesnot exist\n");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"node  doesnot exist");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1473,7 +1598,15 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     if ( beginning < 0) {
         fprintf(stderr,"Warning :node  doesnot exist\n");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"node  doesnot exist");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1587,6 +1720,10 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     free_String(&contentnew);
     //printf("\npPASSED\n");
     struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+    if(ResultSend==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     ResultSend->Error=NULL;
     init_VectorInt(&ResultSend->nodeids,0);
     appendto_VectorInt(&ResultSend->nodeids,nodeId);
@@ -1598,7 +1735,12 @@ struct VectorInt* RemoveNode(struct Database *DB, int nodeId) {
         fprintf(stderr,"Waiting for WriteLock-RemoveNode\n");
     }
 
-    struct VectorInt *nodes = malloc(sizeof(struct VectorInt));init_VectorInt(nodes,0);
+    struct VectorInt *nodes = malloc(sizeof(struct VectorInt));
+    if(nodes==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
+    init_VectorInt(nodes,0);
     remove_Node(nodes,DB, nodeId);
 
     updateNodenoLineMap(DB, DB->startindex);
@@ -1617,7 +1759,15 @@ struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlch
     if (!validatexml(&sub_xml)) {
         fprintf(stderr,"\n xml content is not proper- aborting replacing");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"xml content is not proper- aborting replacing");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1629,7 +1779,15 @@ struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlch
     if(startindex<0){
         fprintf(stderr,"\n Node doesnot exist");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"Node doesnot exist");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1647,7 +1805,15 @@ struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlch
     }
     free_VectorInt(&rmids);
     struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+    if(ResultSend==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+    if(error==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     strcpy(error,"Node not found");
     ResultSend->Error=error;
     init_VectorInt(&ResultSend->nodeids,0);
@@ -1673,7 +1839,15 @@ struct ResultStruct * InserSubNode(struct Database *DB, int nodeId,char* sub_xml
     if (!validatexml(&sub_xml) ){
         fprintf(stderr,"\n xml content is not proper- aborting InserSubNode");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"xml content is not proper- aborting InserSubNode");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1692,7 +1866,15 @@ struct ResultStruct * InserSubNode(struct Database *DB, int nodeId,char* sub_xml
     if (end < 0 ){
         fprintf(stderr,"Error :node  doesnot exist\n");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"node  doesnot exist");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1715,7 +1897,15 @@ struct ResultStruct * AppendAfterNode(struct Database *DB, int nodeId,char* sub_
     if (!validatexml(&sub_xml) ){
         fprintf(stderr,"\nError : xml content is not proper- aborting AppendAfterNode");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"xml content is not proper- aborting ");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1728,7 +1918,15 @@ struct ResultStruct * AppendAfterNode(struct Database *DB, int nodeId,char* sub_
     if (end < 0) {
         fprintf(stderr,"Error :node  doesnot exist\n");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"node  doesnot exist ");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1750,7 +1948,15 @@ struct ResultStruct * AppendBeforeNode(struct Database *DB, int nodeId,char* sub
     if (!validatexml(&sub_xml) ){
         fprintf(stderr,"\n xml content is not proper- aborting AppendBeforeNode");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"xml content is not proper- aborting ");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1763,7 +1969,15 @@ struct ResultStruct * AppendBeforeNode(struct Database *DB, int nodeId,char* sub
     if (start < 0) {
         fprintf(stderr,"Error :node  doesnot exist\n");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
+        if(error==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+        if(ResultSend==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
         strcpy(error,"node  doesnot exist ");
         ResultSend->Error=error;
         init_VectorInt(&ResultSend->nodeids,0);
@@ -1840,6 +2054,9 @@ void free_ResultStruct(struct ResultStruct *v){
     free(v);
 }
 bool Regular_expmatch(char* String,char*Regexpr){
+   //regular expression is not in windows
+#if defined(__linux__)
+
     regex_t regex;
 
     int reti = regcomp(&regex,Regexpr , REG_EXTENDED);
@@ -1854,12 +2071,17 @@ bool Regular_expmatch(char* String,char*Regexpr){
     if (!reti) {
         return true;
     }
+#endif
     return false;
 
 
 }
 static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeLine,struct String* QUERY ,struct String* RegExp ,bool onlypath ,bool isRegExp )  {
     struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+    if(ResultSend==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     int parent_endline = DB->nodeNoToLineno.items[DB->Nodeendlookup.items[DB->global_ids.items[parent_nodeLine]]] + 1;
     init_VectorInt(&ResultSend->nodeids,0);
     init_StringList(&ResultSend->labelvalues,0);
@@ -1891,7 +2113,7 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
     struct suspectedLinenos_Result *suspectedLines= suspectedLinenos(DB, &QueryPath, parent_nodeLine, parent_endline);
     for(size_t index=0;index<suspectedLines->suspectedLineStarts.length;index++){
         int start=suspectedLines->suspectedLineStarts.items[index];
-        //printf("\nsatrt- %d  %d  %d", start,parent_nodeLine,parent_endline);
+        //printf("\nstart- %d  parent_nodeLine-%d  parent_endline-%d", start,parent_nodeLine,parent_endline);
         if (start >= parent_nodeLine && start <= parent_endline) {
             int LineNo = start;
             while (InsideParent && (size_t)LineNo < DB->global_dbLines.length && LineNo <= suspectedLines->suspectedLineEnds.items[index]) {
@@ -2041,7 +2263,12 @@ int ParentNode(struct Database *DB,int nodeId)  {
 }
 
 struct VectorInt *ChildNodes(struct Database *DB,int nodeId) {
-    struct VectorInt * ResultIds=malloc(sizeof (struct VectorInt)) ;init_VectorInt(ResultIds,0);
+    struct VectorInt * ResultIds=malloc(sizeof (struct VectorInt)) ;
+    if(ResultIds==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
+    init_VectorInt(ResultIds,0);
     while( DB->WriteLock ){
         fprintf(stderr,"Waiting for WriteLock-ChildNodes\n");
     }
@@ -2165,6 +2392,10 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     struct String  QUERY_inp;init_String(&QUERY_inp,0);
     StringCharCpy(&QUERY_inp, QUERY_inpch);
     struct ResultStruct* ResultSend= malloc(sizeof(struct ResultStruct));
+    if(ResultSend==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     init_VectorInt(&ResultSend->nodeids,0);
     init_StringList(&ResultSend->labelvalues,0);
     ResultSend->Error=NULL;
@@ -2313,6 +2544,10 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
 
 struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  {
     struct String* Error=malloc(sizeof (struct String)); init_String(Error,0);
+    if(Error==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     while(DB->WriteLock) {
         fprintf(stderr,"Waiting for WriteLock-CutPasteAsSubNode\n");
     }

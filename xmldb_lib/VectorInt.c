@@ -1,3 +1,11 @@
+/*
+** This file is the part of XmlDBlib project, an easy to use xmlparser written from scratch.
+**
+** The author disclaims copyright to this source code.  In place of
+** a legal notice, here is a blessing:
+**    May you share freely, never taking more than you give.
+**
+*/
 #include "VectorInt.h"
 
 void init_VectorInt(struct VectorInt* v,size_t size){
@@ -6,6 +14,10 @@ void init_VectorInt(struct VectorInt* v,size_t size){
     }
     //initialsed because some variables use it as static array
     v->items = (int*) calloc(size , sizeof(int));
+    if(v->items==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     v->size=size;
     v->length=0;
     v->items[0]=-1;
@@ -14,6 +26,10 @@ void init_VectorInt(struct VectorInt* v,size_t size){
 inline void VectorInt_Resize(struct VectorInt *vect,size_t new_size){
         vect->size=new_size;
         vect->items= realloc(vect->items, new_size * sizeof(int));
+        if(vect->items==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
 }
 void free_VectorInt(struct VectorInt *vect){
      free(vect->items);
@@ -52,6 +68,10 @@ void inserto_VectorInt(struct VectorInt *src_dest,size_t index,int value){
         VectorInt_Resize( src_dest ,(src_dest->size+1)*2);
     }
     int* remaining=  malloc((src_dest->length-index) * sizeof(int));
+    if(remaining==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     memcpy(remaining, src_dest->items+index, (src_dest->length-index)*sizeof (int));
     src_dest->items[index]=value;
     memcpy( src_dest->items+index+1,remaining, (src_dest->length-index)*sizeof (int));
@@ -61,6 +81,10 @@ void inserto_VectorInt(struct VectorInt *src_dest,size_t index,int value){
 void removefrom_VectorInt(struct VectorInt *src_dest,size_t index){
 
     int* remaining= malloc((src_dest->length-index-1) * sizeof(int));
+    if(remaining==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     memcpy(remaining, src_dest->items+index+1, (src_dest->length-index-1)*sizeof (int));
     memcpy( src_dest->items+index,remaining, (src_dest->length-index-1)*sizeof (int));
     src_dest->length--;

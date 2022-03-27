@@ -1,3 +1,11 @@
+/*
+** This file is the part of XmlDBlib project, an easy to use xmlparser written from scratch.
+**
+** The author disclaims copyright to this source code.  In place of
+** a legal notice, here is a blessing:
+**    May you share freely, never taking more than you give.
+**
+*/
 #include "StringList.h"
 
 void init_StringList(struct StringList *v,size_t size){
@@ -5,6 +13,10 @@ void init_StringList(struct StringList *v,size_t size){
         size=1;
     }
     v->string = malloc( size * sizeof(struct String));
+    if(v->string==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     v->size=size;
     v->length=0;
 }
@@ -12,6 +24,10 @@ void init_StringList(struct StringList *v,size_t size){
 inline void StringList_Resize(struct StringList *vect,size_t new_size){
         vect->size=new_size;
         vect->string= realloc(vect->string, new_size * sizeof(struct String));
+        if(vect->string==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
 
 }
 void free_StringList(struct StringList *vect){

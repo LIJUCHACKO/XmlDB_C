@@ -1,3 +1,11 @@
+/*
+** This file is the part of XmlDBlib project, an easy to use xmlparser written from scratch.
+**
+** The author disclaims copyright to this source code.  In place of
+** a legal notice, here is a blessing:
+**    May you share freely, never taking more than you give.
+**
+*/
 #ifndef STRING
 #define STRING
 #include<malloc.h>
@@ -5,6 +13,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 struct String{
     size_t length;
     size_t size;

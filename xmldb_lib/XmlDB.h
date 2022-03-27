@@ -1,4 +1,11 @@
- 
+/*
+** This file is the part of XmlDBlib project, an easy to use xmlparser written from scratch.
+**
+** The author disclaims copyright to this source code.  In place of
+** a legal notice, here is a blessing:
+**    May you share freely, never taking more than you give.
+**
+*/
 #ifndef XMLDB
 #define XMLDB
 #ifndef _GNU_SOURCE
@@ -13,7 +20,9 @@
 #include "Hashtable.h"
 #include "String.h"
 #include <ctype.h>
+#if defined(__linux__)
 #include<regex.h>
+#endif
 #include "SegmentedStringList.h"
 
 #define ERRORLENGTH 2000

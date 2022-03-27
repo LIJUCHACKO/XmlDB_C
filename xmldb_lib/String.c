@@ -1,4 +1,12 @@
-﻿#include "String.h"
+﻿/*
+** This file is the part of XmlDBlib project, an easy to use xmlparser written from scratch.
+**
+** The author disclaims copyright to this source code.  In place of
+** a legal notice, here is a blessing:
+**    May you share freely, never taking more than you give.
+**
+*/
+#include "String.h"
 
 
 void init_String(struct String*v,size_t size){
@@ -7,6 +15,10 @@ void init_String(struct String*v,size_t size){
         size=100;
     }
     v->charbuf = malloc(size * sizeof(char));
+    if(v->charbuf==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     v->charbuf[0]='\0';
     v->size=size;
     v->length=0;
@@ -15,6 +27,10 @@ void init_String(struct String*v,size_t size){
 struct String* create_String(char* value){
     size_t valu_len=strlen(value);
     struct String *v=malloc(sizeof (struct String));
+    if(v==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     init_String(v,valu_len+2);
     if(v->length+valu_len+2> v->size){
         String_Resize( v ,(v->length+valu_len*2));
@@ -27,7 +43,10 @@ struct String* create_String(char* value){
 inline void String_Resize(struct String *vect, size_t new_size){
      vect->size=new_size;
      vect->charbuf= realloc(vect->charbuf, new_size * sizeof(char));
-
+     if(vect->charbuf==NULL){
+         fprintf(stderr,"\nError-Memory allocation failed");
+         exit(1);
+     }
 
 }
 void free_String(struct String *vect){
@@ -131,6 +150,10 @@ void ReplcSubstring(struct String *src_dest,char *SubString,char* NewString){
     size_t substrlen=strlen(SubString);
     String_Resize( src_dest ,(src_dest->length+1+newstrlen*10)*2);
     char* buffer=malloc((src_dest->length+1)*sizeof (char));
+    if(buffer==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     //cpy to a buffer
     memcpy(buffer,src_dest->charbuf,src_dest->length+1);
     char* bufferptrmov=buffer;

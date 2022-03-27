@@ -1,7 +1,19 @@
+/*
+** This file is the part of XmlDBlib project, an easy to use xmlparser written from scratch.
+**
+** The author disclaims copyright to this source code.  In place of
+** a legal notice, here is a blessing:
+**    May you share freely, never taking more than you give.
+**
+*/
 #include "SegmentedStringList.h"
 void init_SegmentedStringList(struct SegmentedStringList *v){
 
     v->Segments = malloc( 10 * sizeof(struct StringList));
+    if(v->Segments==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     v->NoofSegments=10;
     v->lastSegment=0;
     v->length=0;
@@ -20,6 +32,10 @@ void free_SegmentedStringList(struct SegmentedStringList *vect){
 inline void SegmentedStringList_Resize(struct SegmentedStringList *vect,size_t new_size){
         vect->NoofSegments=new_size;
         vect->Segments= realloc(vect->Segments, new_size * sizeof(struct StringList));
+        if(vect->Segments==NULL){
+            fprintf(stderr,"\nError-Memory allocation failed");
+            exit(1);
+        }
 }
 
 static void increase_Segments(struct SegmentedStringList *vect){

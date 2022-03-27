@@ -1,7 +1,19 @@
- #include "Hashtable.h"
+/*
+** This file is the part of XmlDBlib project, an easy to use xmlparser written from scratch.
+**
+** The author disclaims copyright to this source code.  In place of
+** a legal notice, here is a blessing:
+**    May you share freely, never taking more than you give.
+**
+*/
+#include "Hashtable.h"
 
 void init_hashtable(struct Hashtable* hashtable ,size_t size){
     hashtable->lists= (struct VectorInt *)malloc(size*sizeof(struct VectorInt));
+    if(hashtable->lists==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
     hashtable->size=size;
     for(size_t i=0;i<size;i++){
         init_VectorInt(&hashtable->lists[i],0);
