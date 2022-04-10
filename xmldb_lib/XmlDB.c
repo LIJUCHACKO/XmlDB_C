@@ -2351,6 +2351,13 @@ static void separateValue(struct String *pathpart ,struct String *path,struct St
         Sub_String(value,pathpart, i+1, pathpart->length-1 );
     }
 }
+/**
+ * @brief preparePathparts -splits query into parts to search in stages
+ * when attribute or value is given in the query in the inbetween path
+ * eg:-
+ * @param path_in -A/B[def]/C/D[de]
+ * @param result - A/B[def]; C/D[de]
+ */
 static void preparePathparts(struct String *path_in,struct StringList *result){
     struct String tmp;init_String(&tmp,100);
     struct String path;init_String(&path,100);
@@ -2387,6 +2394,20 @@ static void pathwithoutvalue(struct String * path ,struct String *output)  {
      free_String(&value);
      free_String(&pathonly);
 }
+/**
+ * @brief GetNode - Process search for xpath(QUERY_inpch) under node (parent_nodeId)
+ * @param DB
+ * @param parent_nodeId
+ * @param QUERY_inpch - query is similar to xpath
+ * CASES:
+ * (1) A/B/C/D
+ * (2) A/<x>/<y>/D               - here <x> & <y> is unknown
+ * (3) A/../D                  - recursive search
+ * (4) A/B/C[value]            - value of the node is also a search parameter
+ * (4) A/B/C[attri="value"]    - an attribute of the node is also a search parameter
+ * (5) A/B* /C[attri="value"]   - returns node B which satisfies the query.
+ * @return
+ */
 
 struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QUERY_inpch) {
     struct String  QUERY_inp;init_String(&QUERY_inp,0);
@@ -2399,7 +2420,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     init_VectorInt(&ResultSend->nodeids,0);
     init_StringList(&ResultSend->labelvalues,0);
     ResultSend->Error=NULL;
-    // ldld/dkdicmk/<xe>/kjk[]/lkl/
+    // ldld/dkdicmk*/<xe>/kjk[]/lkl
     while( DB->WriteLock ){
         fprintf(stderr,"Waiting for WriteLock-GetNode\n");
     }
@@ -2420,13 +2441,14 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     }
 
     if (DB->Debug_enabled) {
-        printf("ProcessQuery :QUERY- %s\n", QUERY_inp.charbuf);
-        printf("ProcessQuery :RequiredPath- %s\n", RequiredPath.charbuf);
+        // ldld/dkdicmk*/<xe>/kjk[]/lkl
+        printf("ProcessQuery :QUERY- %s\n", QUERY_inp.charbuf); //gives- ldld/dkdicmk*/<xe>/kjk[]/lkl
+        printf("ProcessQuery :RequiredPath- %s\n", RequiredPath.charbuf); //gives- ldld/dkdicmk*
 
     }
     struct StringList  parts ;init_StringList(&parts,0);
     preparePathparts(&QUERY_inp,&parts);
-
+    //eg-: ldld/dkdicmk[a]/<xe>/kjk[b]/lkl --> ldld/dkdicmk[a] ; <xe>/kjk[b] ; lkl
     struct VectorInt  final_nodesLineNo;init_VectorInt(&final_nodesLineNo,0);
     int parent_nodeLine = NodeLine(DB, parent_nodeId);
     if (parent_nodeLine < 0) {
@@ -2441,6 +2463,10 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     struct StringList  nextlabels ;init_StringList(&nextlabels,0);
 
     for(size_t i=0;i<parts.length;i++){
+        //Does search for each part
+        //Result of search of first part becomes root node for second part and so on.
+        //In the subsequent parts search in done for all possible node found in the previous part
+        // and the label value in each search is recorded to derive final required path.
         struct String *part=&parts.string[i];
         struct String QUERYSTR;init_String(&QUERYSTR,0);
         struct String RegExp;init_String(&RegExp,0);
