@@ -12,8 +12,8 @@
 #include<memory.h>
 #include <stdio.h>
 struct VectorInt{
-    size_t length;
-    size_t size;
+    size_t length;  //length of vector
+    size_t size;    //total capacity
     int* items;
 };
 

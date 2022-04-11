@@ -11,7 +11,7 @@
 #include "StringList.h"
 #define SEGMENTLENGTH 2000
 struct SegmentedStringList{
-    size_t length;
+    size_t length;     //length of vector
     size_t lastSegment;
     size_t NoofSegments;
     struct StringList* Segments;

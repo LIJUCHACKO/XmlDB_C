@@ -13,8 +13,8 @@
 #include "string.h"
 #include "String.h"
 struct StringList{
-    size_t length;
-    size_t size;
+    size_t length;  //length of vector
+    size_t size;    //total capacity
     struct String* string;
 };
 

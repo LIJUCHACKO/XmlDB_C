@@ -15,8 +15,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 struct String{
-    size_t length;
-    size_t size;
+    size_t length;//length of vector
+    size_t size;  //total capacity
     char* charbuf;
 };
 void init_String(struct String*v,size_t size);

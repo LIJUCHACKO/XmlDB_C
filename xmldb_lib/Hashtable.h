@@ -13,7 +13,7 @@
 #include "stdbool.h"
 #include <stdio.h>
 struct Hashtable{
-    int size;
+    int size;       //No of hashs
     struct VectorInt* lists;
 };
 void free_hashtable(struct Hashtable* hashtable);
