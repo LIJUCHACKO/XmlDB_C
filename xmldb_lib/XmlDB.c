@@ -1044,25 +1044,23 @@ struct String* GetNodeAttribute(struct Database *DB ,int nodeId ,char* labelchar
         free_String(&label);
         return NULL;
     }
+    TrimSpaceString(&label);
+    StringCharConcat(&label,"=");
     struct StringList attributes ;init_StringList(&attributes,0);
     String_Split(&attributes,Valueat(&DB->global_attributes,LineNo), "||");
+    
     for(size_t i=0;i<attributes.length;i++){
         struct String *attri=&attributes.string[i];
         TrimSpaceString(attri);
-        struct StringList LabelValue ; init_StringList(&LabelValue,0);
-        String_Split(&LabelValue,attri, "=\"");
-        if ((LabelValue.length) >= 2) {
-            TrimSpaceString(&label);
-            if (strcmp(LabelValue.string[0].charbuf ,label.charbuf)==0) {
-                StringStringCpy(content,&LabelValue.string[1]);
-                TrimRightString(content,1);//to remove "
-                free_String(&label);
+
+        if(attri->length>label.length+1){
+            if (strncmp(attri->charbuf ,label.charbuf,label.length)==0) {
+                Sub_String(content,attri,label.length+1,attri->length-1);
                 free_StringList(&attributes);
-                free_StringList(&LabelValue);
+                free_String(&label);
                 return content;
             }
         }
-        free_StringList(&LabelValue);
     }
     free_String(&label);
     free_StringList(&attributes);
