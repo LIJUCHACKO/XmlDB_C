@@ -1520,8 +1520,7 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
     struct String *value = GetNodeValue(DB, nodeId);
     struct String result ; init_String(&result,new_value->length*2);
     //char *result= malloc(strlen(new_value)*2 * sizeof(char));
-    if (value->length == 0 && Nooflines == 1) {
-        if ((strstr(content->charbuf, "/>"))!=NULL) {
+    if (value->length == 0 && Nooflines == 1 && (strstr(content->charbuf, "/>"))!=NULL) {
             struct StringList parts ;init_StringList(&parts,0);
             String_Split(&parts,content, "/>");
             StringStringCpy(&result,&parts.string[0]);
@@ -1533,7 +1532,6 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
             StringCharConcat(&result,">" );
             free_StringReturn(nodename);
             free_StringList(&parts);
-        }
     } else {
         struct StringList parts ;init_StringList(&parts,0);
         String_Split(&parts,content, ">");
@@ -2712,3 +2710,4 @@ struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  
     Error->charbuf=NULL;
     return Error;
 }
+
