@@ -484,6 +484,13 @@ static void update_path(struct Database *DB ,struct String* NodeName ,int mode  
     }
 
     if (mode == 3) {
+        struct String path_end;init_String(&path_end,0);
+        Sub_String(&path_end,&DB->path,DB->path.length-NodeName->length,DB->path.length);
+        if(strcmp(path_end.charbuf,NodeName->charbuf)!=0){
+            fprintf(stderr,"xml is corrupt\n");
+            exit(1);
+        }
+
         StringCharConcat(&DB->path,"/~");
     }
     //printf(" path- %s   \n", DB->path.charbuf);
