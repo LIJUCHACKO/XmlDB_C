@@ -795,7 +795,9 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                             struct StringList subparts; init_StringList(&subparts,0);
                             String_Split(&subparts,part," ");
                             if (subparts.length > 1 ){
-                                StringStringConcat(&attributebuffer,&subparts.string[1]);
+                                StringStringCpypart(&attributebuffer,part,subparts.string[0].length,part->length);
+                                TrimSpaceString(&attributebuffer);
+                                //StringStringConcat(&attributebuffer,&subparts.string[1]);
                                 StringCharConcat(&attributebuffer,"\"");
                             }
                             StringStringCpy(&NodeName,&subparts.string[0]);
@@ -861,7 +863,9 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
                                 struct StringList subparts; init_StringList(&subparts,0);
                                 String_Split(&subparts,part," ");
                                 if (subparts.length > 1 ){
-                                    StringStringConcat(&attributebuffer,&subparts.string[1]);
+                                    StringStringCpypart(&attributebuffer,part,subparts.string[0].length,part->length);
+                                    TrimSpaceString(&attributebuffer);
+                                    //StringStringConcat(&attributebuffer,&subparts.string[1]);
                                     StringCharConcat(&attributebuffer,"\"");
                                 }
                                 StringStringCpy(&NodeName,&subparts.string[0]);
@@ -1696,7 +1700,9 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
             struct StringList subparts; init_StringList(&subparts,0);
             String_Split(&subparts,part," ");
             if (subparts.length > 1 ){
-                StringStringConcat(&attributebuffer,&subparts.string[1]);
+                StringStringCpypart(&attributebuffer,part,subparts.string[0].length,part->length);
+                TrimSpaceString(&attributebuffer);
+                //StringStringConcat(&attributebuffer,&subparts.string[1]);
                 StringCharConcat(&attributebuffer,"\"");
             }
             free_StringList(&subparts);
