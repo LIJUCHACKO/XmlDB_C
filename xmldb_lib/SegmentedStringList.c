@@ -118,6 +118,7 @@ void ModifyValueat(struct SegmentedStringList *vect,size_t index,struct String *
         if((size+vect->Segments[i].length) >index){
            // printf("\nSegments[%ld][%ld]",i,index-size);
             StringStringCpy(&vect->Segments[i].string[index-size],newvalue);
+            return;
         }
         size=size+vect->Segments[i].length;
         i++;
