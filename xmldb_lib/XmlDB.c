@@ -2120,9 +2120,14 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
     }
 
     struct suspectedLinenos_Result *suspectedLines= suspectedLinenos(DB, &QueryPath, parent_nodeLine, parent_endline);
+    if (DB->Debug_enabled) {
+        printf("suspectedLines->suspectedLineStarts.length-%d\n",suspectedLines->suspectedLineStarts.length);
+    }
     for(size_t index=0;index<suspectedLines->suspectedLineStarts.length;index++){
         int start=suspectedLines->suspectedLineStarts.items[index];
-        //printf("\nstart- %d  parent_nodeLine-%d  parent_endline-%d", start,parent_nodeLine,parent_endline);
+        if (DB->Debug_enabled) {
+          printf("\tcase-%d\tstart- %d  parent_nodeLine-%d  parent_endline-%d\n",index, start,parent_nodeLine,parent_endline);
+        }
         if (start >= parent_nodeLine && start <= parent_endline) {
             int LineNo = start;
             while (InsideParent && (size_t)LineNo < DB->global_dbLines.length && LineNo <= suspectedLines->suspectedLineEnds.items[index]) {
@@ -2435,7 +2440,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     }
     if (DB->Debug_enabled ){
 
-        printf("==Process Query===\n");
+        printf("\n==Process Query===\n");
         printf("ProcessQuery :QUERY_inp- %s\n", QUERY_inp.charbuf);
     }
     struct String tmp;init_String(&tmp,0);
@@ -2508,8 +2513,9 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
 
                 //for i, label := range labels {
                 for(size_t i=0;i<NodeLocated->labelvalues.length;i++){
-                    struct String *label=&NodeLocated->labelvalues.string[i];
+                    struct String *label=&NodeLocated->labelvalues.string[i];//<label>=value;
                     StringStringCpy(&tmp,label);
+                    //value used for the previously found label also have to be kept eg for <x>/dd/<y>/err/:- value of <x> used while finding <y>
                     StringStringConcat(&tmp,&ResultSend->labelvalues.string[ind]);
                     appendto_StringList(&nextlabels,&tmp);
                     appendto_VectorInt(&nextnodesLineNo, NodeLocated->nodeids.items[i]);
@@ -2525,8 +2531,8 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
             clear_StringList(&ResultSend->labelvalues);
             clear_VectorInt(&final_nodesLineNo);
 
-            concatenate_StringList(&ResultSend->labelvalues ,& nextlabels);
-            concatenate_VectorInt( &final_nodesLineNo , &nextnodesLineNo);
+            concatenate_StringList(&ResultSend->labelvalues ,& nextlabels);//["<label1>=value;<label2>=value;",".."]
+            concatenate_VectorInt( &final_nodesLineNo , &nextnodesLineNo);//[result_final nodeid1(with above labels & values),result_final nodeid2    ]
         }
         free_String(&QUERYSTR);
         free_String(&RegExp);
@@ -2541,9 +2547,10 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
         if (nodeLine >= 0) {
             struct String  RequiredPathN;init_String(&RequiredPathN,0);
             StringStringCpy(&RequiredPathN , &RequiredPath);
-            //printf("ProcessQuery :label_res %s\n", label_res)
+            //printf("ProcessQuery :label_res %s\n", label_res)//<label1>=value1;<label2>=value2;
             struct StringList  entries ;init_StringList(&entries,0);
             String_Split(&entries,label_res, ";");
+            //replacing all <x>
             for(size_t k=0;k<entries.length;k++){
                 struct String *entry=&entries.string[k];
                 struct StringList parts ;init_StringList(&parts,0);
@@ -2558,7 +2565,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
             StringStringCpy(&tmp,Valueat(&DB->global_paths,parent_nodeLine));
             StringCharConcat(&tmp,"/");
             StringStringConcat(&tmp,&RequiredPathN);
-            int ResultId = LocateRequireParentdNode(DB, parent_nodeLine, &tmp, nodeLine);
+            int ResultId = LocateRequireParentdNode(DB, parent_nodeLine, &tmp, nodeLine);//parent path just above the child
             if( ResultId > 0 ){
                 if (DB->Debug_enabled ){
                     printf("ProcessQuery :ResultId %d\n", ResultId);
@@ -2720,7 +2727,129 @@ struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  
     updateNodenoLineMap(DB, 0);
 
     DB->startindex = -1;
+    free(Error->charbuf);
     Error->charbuf=NULL;
     return Error;
 }
+void free_Attributes(struct ResultAttributes *v){
+    free_StringList(&v->labels);
+    free_StringList(&v->values);
+    free(v);
+}
+struct ResultAttributes* GetAllNodeAttributes(struct Database *DB,int nodeId)  {
+    while( DB->WriteLock) {
+        fprintf(stderr,"Waiting for WriteLock-GetNodeAttribute\n");
+    }
+    struct ResultAttributes* Attributes= malloc(sizeof(struct ResultStruct));
+    if(Attributes==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
+    init_StringList(&Attributes->labels,0);
+    init_StringList(&Attributes->values,0);
+    int LineNo = DB->nodeNoToLineno.items[nodeId];
+    if (LineNo < 0 ){
+        fprintf(stderr,"Warning :node  doesnot exist\n");
+        return Attributes;
+    }
 
+
+    struct StringList attributes_tmp ;init_StringList(&attributes_tmp,0);
+    String_Split(&attributes_tmp,Valueat(&DB->global_attributes,LineNo), "||");
+
+    for(size_t i=0;i<attributes_tmp.length;i++){
+        struct String *attri=&attributes_tmp.string[i];
+        TrimSpaceString(attri);
+
+        struct StringList parts ;init_StringList(&parts,0);
+        String_Split(&parts,attri, "=\"");
+        if(parts.length>=2){
+            appendto_StringList(&Attributes->labels, &parts.string[0]);
+            TrimRightString(&parts.string[1],1);
+            appendto_StringList(&Attributes->values, &parts.string[1]);
+        }
+        free_StringList(&parts);
+    }
+    free_StringList(&attributes_tmp);
+    return Attributes;
+}
+
+struct String* MergeNodes(struct Database *DB,int fromNodeId,int toNodeId) {
+    //merge attributes only copy if not present
+    struct String* Error=malloc(sizeof (struct String)); init_String(Error,0);
+    if(Error==NULL){
+        fprintf(stderr,"\nError-Memory allocation failed");
+        exit(1);
+    }
+    while(DB->WriteLock) {
+        fprintf(stderr,"Waiting for WriteLock-MergeNodes\n");
+    }
+    struct ResultAttributes* labelsvalues1 = GetAllNodeAttributes(DB, fromNodeId);
+    struct ResultAttributes* labelsvalues2 = GetAllNodeAttributes(DB, fromNodeId);
+
+     for(size_t i=0;i<labelsvalues1->labels.length;i++){
+          bool label_present = false;
+          for(size_t j=0;j<labelsvalues2->labels.length;j++){
+              if (strcmp(labelsvalues1->labels.string[i].charbuf,labelsvalues2->labels.string[j].charbuf)==0){
+                  label_present = true;
+              }
+          }
+          if (!label_present) {
+              UpdateAttributevalue(DB, toNodeId, labelsvalues1->labels.string[i].charbuf, labelsvalues1->values.string[i].charbuf);
+          }
+     }
+     free_Attributes(labelsvalues1);
+     free_Attributes(labelsvalues2);
+
+    struct VectorInt *childnodes_From = ChildNodes(DB, fromNodeId);
+    struct VectorInt *childnodes_To = ChildNodes(DB, toNodeId);
+
+    for(size_t i=0;i<childnodes_From->length;i++){
+        struct String *node_name1 = GetNodeName(DB, childnodes_From->items[i]) ;
+        bool child_considered = false ;
+        for(size_t j=0;j<childnodes_To->length;j++){
+            struct String *node_name2 = GetNodeName(DB, childnodes_To->items[j]);
+            if (strcmp(node_name1->charbuf, node_name2->charbuf)==0) {
+                struct String* err = MergeNodes(DB, childnodes_From->items[i], childnodes_To->items[j]);
+                if (err != NULL) {
+                    free_StringReturn(Error);
+                    return err;
+                }
+                child_considered = true;
+            }
+        }
+        if (!child_considered) {
+            //copy child
+            struct String* content= GetNodeContentsRaw(DB, childnodes_From->items[i]);
+            struct ResultStruct *result = InserSubNode(DB, toNodeId, content->charbuf);
+            free_StringReturn(content);
+            if (result->Error != NULL) {
+                StringCharCpy(Error,result->Error);
+                free_ResultStruct(result);
+                return Error;
+            }
+            free_ResultStruct(result);
+        }
+    }
+
+
+    if (childnodes_From->length == 0 ){
+        //<a/> or <a></a>
+        //assign value if not present
+        struct String *old_value = GetNodeValue(DB, toNodeId);
+        if (old_value->length == 0) {
+            struct String *new_value = GetNodeValue(DB, fromNodeId);
+            struct ResultStruct *result = update_nodevalue(DB, toNodeId, new_value);
+            if (result->Error != NULL) {
+                StringCharCpy(Error,result->Error);
+                free_ResultStruct(result);
+                free_StringReturn(new_value);
+                free_StringReturn(old_value);
+                return Error;
+            }
+        }
+    }
+    free(Error->charbuf);
+    Error->charbuf=NULL;
+    return Error;
+}

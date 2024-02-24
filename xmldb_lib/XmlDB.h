@@ -41,6 +41,11 @@ struct compare_path_Result{
     struct StringList value;
     bool status;
 };
+struct ResultAttributes {
+    struct StringList values;
+    struct StringList labels;
+};
+
 struct Database  {
     char  filename[2000];
     struct String  removeattribute ;
