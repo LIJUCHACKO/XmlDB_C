@@ -38,16 +38,18 @@ void insertid_intohashtable(struct Hashtable* HashTB,int hashno ,int  nodeId,int
     }
     int index = Vect->length - 1;
     unsigned long lastno=Vect->length;
-    while(nodeNoToLineno->items[HashTB->lists[hashno].items[index]] > reference_linenotoinsert){
+    while(nodeNoToLineno->items[HashTB->lists[hashno].items[index]] > reference_linenotoinsert && index>=0){
         lastno=index;
         index--;
-
+        if(index<0){
+            break;
+        }
     }
     if(lastno > Vect->length - 1){
         appendto_VectorInt(Vect,nodeId);
         return;
     }
-    inserto_VectorInt(Vect,index,nodeId);
+    inserto_VectorInt(Vect,lastno,nodeId);
     return;
 }
 
