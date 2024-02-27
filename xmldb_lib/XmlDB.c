@@ -363,6 +363,7 @@ static struct suspectedLinenos_Result *suspectedLinenos(struct Database *DB, str
     int SearchtillEnd = 0;
     int index = pathParts.length - 1;
     while(index >= 0) {
+        //search using last available path /x/y/.. then use y
         //printf("\nindex -%d ",index);
         struct String *part = &pathParts.string[index];
         //printf("\n%s keypart %s", path, part);
@@ -2022,7 +2023,11 @@ int LocateRequireParentdNode(struct Database *DB ,int parent_nodeLine ,struct St
         int start=suspectedLines->suspectedLineStarts.items[i];
         if (start >= parent_nodeLine && start <= LineNo_inp) {
             if (start > requiredline) {
-                requiredline = start;
+                struct compare_path_Result *compareresult= compare_path(Valueat(&DB->global_paths,start), RequiredPath);
+                if (compareresult->status ){
+                  requiredline = start;
+		}
+		free_compare_path_Result(compareresult);
             }
         }
     }
