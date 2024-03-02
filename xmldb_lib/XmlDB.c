@@ -1093,7 +1093,13 @@ struct String *GetNodeValue(struct Database *DB ,int nodeId)  {
         fprintf(stderr,"Warning :node  doesnot exist\n");
         return content;
     }
-    StringStringCpy(content,Valueat(&DB->global_values,lineno));
+    struct String content_tmp;init_String(&content_tmp,0);
+
+    StringStringCpy(&content_tmp,Valueat(&DB->global_values,lineno));
+
+    ReplaceHTMLSpecialEntities(content,&content_tmp);
+    free_String(&content_tmp);
+
     return content;
 }
 struct String * GetNodeName(struct Database *DB, int nodeId )  {
