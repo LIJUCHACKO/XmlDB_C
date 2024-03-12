@@ -2594,7 +2594,7 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     return ResultSend;
 
 }
-
+/* ////////////to be corrected/////////////
 struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  {
     struct String* Error=malloc(sizeof (struct String)); init_String(Error,0);
     if(Error==NULL){
@@ -2688,10 +2688,20 @@ struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  
     }
     DB->WriteLock = true;
     while( Line < (int) DB_global_dbLines.length) {
-        //SegNo, index := getSegmenNoIndex(DB, Line)
-        StringStringCpy(&DB->path,&newparentpath);
-        ReplcSubstring(&newparentpath,previousparentpath->charbuf, "");
+
         //DB->path = newparentpath + strings.ReplaceAll(DB_global_paths[Line], previousparentpath, "")
+        //strings.ReplaceAll(DB_global_paths[Line], previousparentpath, "")
+        struct String tmpstr;
+        init_String(&tmpstr,0);
+        StringStringCpy(&tmpstr,Valueat(&DB->global_dbLines,Line));
+        ReplcSubstring(&tmpstr,previousparentpath->charbuf, "");
+
+
+        StringStringCpy(&DB->path,&newparentpath);
+        StringStringConcat(&DB->path,&tmpstr);
+
+       // ReplcSubstring(&newparentpath,previousparentpath->charbuf, "");
+
 
         insertInTo_SegmentedStringList(&DB->global_dbLines , insertLine, &DB_global_dbLines.string[Line]);
         insertInTo_SegmentedStringList(&DB->global_values , insertLine, &DB_global_values.string[Line]);
@@ -2742,6 +2752,7 @@ struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  
     Error->charbuf=NULL;
     return Error;
 }
+*/
 void free_Attributes(struct ResultAttributes *v){
     free_StringList(&v->labels);
     free_StringList(&v->values);

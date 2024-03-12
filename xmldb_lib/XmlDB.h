@@ -107,5 +107,5 @@ int NextNode(struct Database *DB,int nodeId);
 struct String *Dump_DB(struct Database *DB);
 void Load_dbcontent(struct Database *DB,struct StringList *xmllines) ;
 bool IslowestNode(struct Database *DB, int nodeId);
-struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId);
+//struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId);
 #endif
