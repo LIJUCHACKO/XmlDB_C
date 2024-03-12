@@ -62,7 +62,7 @@ int main()
         printf("old node value- %s", GetNodeValue(DB, result3->nodeids.items[i])->charbuf); //no output, existing id is removed and new id added
         printf("\nnew node value- %s", GetNodeValue(DB, newnodes->nodeids.items[0])->charbuf);
     }
-    printf("\nAfter updation- research\n");
+    printf("\nAfter updation- re-search\n");
     result =  GetNode(DB, 0, "head/title");
     for(size_t i=0;i<result->nodeids.length;i++){
         printf("\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
@@ -70,7 +70,7 @@ int main()
     printf("\n### Updating node attribute##\n");
     result = GetNode(DB, 0, "<x>*[style=\"123\"]/h1");
     for(size_t i=0;i<result->nodeids.length;i++){
-        printf("\n%s", GetNodeAttribute(DB, result->nodeids.items[i], "style")->charbuf);
+        printf("\n%s", GetNodeAttribute(DB, result->nodeids.items[i], "style2")->charbuf);
         UpdateAttributevalue(DB, result->nodeids.items[i], "style", "test2");
         printf("\nafter updating Attribute-\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
         UpdateAttributevalue(DB, result->nodeids.items[i], "label", "value");
@@ -80,7 +80,7 @@ int main()
 
     }
     printf("\n### Recursive Search##\n");
-    result = GetNode(DB, 0, "../h1");
+    result = GetNode(DB, 0, "../h1[test=\"=\"]");
     for(size_t i=0;i<result->nodeids.length;i++){
         printf("\n%s", GetNodeContents(DB, result->nodeids.items[i])->charbuf);
     }
@@ -88,7 +88,7 @@ int main()
     NodeDebug(DB,0);
      printf("\n---------\n");
      //9 is <body> 1 is <head> -see debug output
-     CutPasteAsSubNode(DB,9,1);
+     //CutPasteAsSubNode(DB,6,1);
     NodeDebug(DB,0);
     SaveAs_DB(DB, "sample_mod.html" ) ;
     free(DB);
