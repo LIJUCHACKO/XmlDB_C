@@ -59,6 +59,7 @@ struct Database  {
 
     int global_lineLastUniqueid;
     bool Debug_enabled;
+    bool libreofficemod;
     struct VectorInt nodeNoToLineno;
     struct Hashtable pathKeylookup;
     struct VectorInt  Nodeendlookup;

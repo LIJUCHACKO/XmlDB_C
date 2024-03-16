@@ -84,9 +84,9 @@ struct VectorInt* Get_common(struct VectorInt* set1 ,struct VectorInt*  set2 )  
 
 static  void ReplaceHTMLSpecialEntities(struct String* Result,struct String* input )  {
     StringStringCpy(Result,input);
-    ReplcSubstring(Result,"&amp;", "&");
     ReplcSubstring(Result, "&lt;" , "<");
     ReplcSubstring(Result, "&gt;" , ">");
+    ReplcSubstring(Result, "&#xA;", "\n");
     ReplcSubstring(Result, "&quot;","\"" );
     ReplcSubstring(Result, "&lsquo;" , "‘");
     ReplcSubstring(Result, "&rsquo;", "’");
@@ -94,13 +94,41 @@ static  void ReplaceHTMLSpecialEntities(struct String* Result,struct String* inp
     ReplcSubstring(Result, "&ndash;" , "–");
     ReplcSubstring(Result, "&mdash;", "—" );
     ReplcSubstring(Result, "&apos;", "'");
+    ReplcSubstring(Result, "&lpar;", "(");
+    ReplcSubstring(Result, "&rpar;", ")");
+    ReplcSubstring(Result, "&ast;", "*");
+    ReplcSubstring(Result, "&plus;", "+");
+    ReplcSubstring(Result, "&comma;", ",");
+    ReplcSubstring(Result, "&period;", ".");
+    ReplcSubstring(Result, "&sol;", "/");
+    ReplcSubstring(Result, "&bsol;", "\\");
+    ReplcSubstring(Result, "&colon;", ":");
+    ReplcSubstring(Result, "&quest;", "?");
+    ReplcSubstring(Result, "&commat;", "@");
+    ReplcSubstring(Result, "&lsqb;", "[");
+    ReplcSubstring(Result, "&rsqb;", "]");
+    ReplcSubstring(Result, "&Hat;", "^");
+    ReplcSubstring(Result, "&grave;", "`");
+    ReplcSubstring(Result, "&verbar;", "|");
+    ReplcSubstring(Result, "&lcub;", "{");
+    ReplcSubstring(Result, "&rcub;", "}");
+    ReplcSubstring(Result,"&amp;", "&");
+    ReplcSubstring(Result, "&semi;", ";");//& and ; create problem
+
 }
-static void ReplacewithHTMLSpecialEntities(struct String* Result,struct String* input )
+//libreoffice replace only &amp;  &lt; &gt;
+static void ReplacewithHTMLSpecialEntities(struct Database *DB,struct String* Result,struct String* input )
 {
     StringStringCpy(Result,input);
+    if(!DB->libreofficemod){
+       ReplcSubstring(Result, ";", "$semi$");//& and ; create problem
+    }
     ReplcSubstring(Result,"&", "&amp;" );
     ReplcSubstring(Result, "<", "&lt;" );
     ReplcSubstring(Result, ">", "&gt;" );
+
+    if(!DB->libreofficemod){
+    ReplcSubstring(Result, "\n", "&#xA;");
     ReplcSubstring(Result,"\"", "&quot;" );
     ReplcSubstring(Result, "‘", "&lsquo;" );
     ReplcSubstring(Result, "’", "&rsquo;");
@@ -108,6 +136,26 @@ static void ReplacewithHTMLSpecialEntities(struct String* Result,struct String* 
     ReplcSubstring(Result, "–", "&ndash;" );
     ReplcSubstring(Result, "—", "&mdash;" );
     ReplcSubstring(Result, "'", "&apos;");
+    ReplcSubstring(Result, "(", "&lpar;");
+    ReplcSubstring(Result, ")", "&rpar;");
+    ReplcSubstring(Result, "*", "&ast;");
+    ReplcSubstring(Result, "+", "&plus;");
+    ReplcSubstring(Result, ",", "&comma;");
+    ReplcSubstring(Result, ".", "&period;");
+    ReplcSubstring(Result, "/", "&sol;");
+    ReplcSubstring(Result, "\\", "&bsol;");
+    ReplcSubstring(Result, ":", "&colon;");
+    ReplcSubstring(Result, "?", "&quest;");
+    ReplcSubstring(Result, "@", "&commat;");
+    ReplcSubstring(Result, "[", "&lsqb;");
+    ReplcSubstring(Result, "]", "&rsqb;");
+    ReplcSubstring(Result, "^", "&Hat;");
+    ReplcSubstring(Result, "`", "&grave;");
+    ReplcSubstring(Result, "|", "&verbar;");
+    ReplcSubstring(Result, "{", "&lcub;");
+    ReplcSubstring(Result, "}", "&rcub;");
+    ReplcSubstring(Result, "$semi$", "&semi;");
+   }
 }
 
 static bool writeLines(struct Database *DB ,char* path )  {
@@ -923,6 +971,7 @@ struct Database* init_Database(int maxNoofLines){
         maxNoofLines = 99999;
     }
     DB->Debug_enabled=false;
+    DB->libreofficemod=false;
     DB->maxInt = maxNoofLines;
     init_VectorInt(&DB->deleted_ids,10);
     init_VectorInt(&DB->nodeNoToLineno, DB->maxInt);/*fixed size*/
@@ -1587,7 +1636,7 @@ struct ResultStruct *UpdateNodevalue(struct Database *DB, int nodeId,char* new_v
     }
 
     struct String Result;init_String(&Result,0);
-    ReplacewithHTMLSpecialEntities(&Result,&new_value);
+    ReplacewithHTMLSpecialEntities(DB,&Result,&new_value);
     struct ResultStruct* ResultSend=  update_nodevalue(DB, nodeId, &Result);
     free_String(&Result);
     free_String(&new_value);
@@ -2213,7 +2262,7 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
                                             match= Regular_expmatch(Valueat(&DB->global_values,LineNo)->charbuf,valueorAttribute->charbuf);
                                         } else {
                                             struct String valueorAttributeRe ;init_String(&valueorAttributeRe,0);
-                                            ReplacewithHTMLSpecialEntities(&valueorAttributeRe,valueorAttribute);
+                                            ReplacewithHTMLSpecialEntities(DB,&valueorAttributeRe,valueorAttribute);
                                             struct String tmp ;init_String(&tmp,0);
                                             StringStringCpy(&tmp,Valueat(&DB->global_values,LineNo));
                                             TrimSpaceString(&tmp);
