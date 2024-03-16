@@ -93,9 +93,28 @@ void String_Split(struct StringList *result ,struct String *string, char* Separa
     StringStringCpy(&string_cpy,string);
 
     //strtok doesnot support substring as delimiter
-    ReplcSubstring(&string_cpy,Separator,"^"); //hope nobody use ^
+
     char strtokSeperator[2];
-    strcpy(strtokSeperator,"^");
+    if(strlen(Separator)>1){
+           //hope nobody use ` , ^,#,~ simultaneously
+          if(strchr(string_cpy.charbuf, '`') == NULL)
+          {
+            ReplcSubstring(&string_cpy,Separator,"`");
+            strcpy(strtokSeperator,"`");
+          }else if(strchr(string_cpy.charbuf, '^') == NULL){
+              ReplcSubstring(&string_cpy,Separator,"^");
+    		strcpy(strtokSeperator,"^");
+          }else if(strchr(string_cpy.charbuf, '#') == NULL){
+              ReplcSubstring(&string_cpy,Separator,"#");
+              strcpy(strtokSeperator,"#");
+          }else if(strchr(string_cpy.charbuf, '~') == NULL){
+              ReplcSubstring(&string_cpy,Separator,"~");
+              strcpy(strtokSeperator,"~");
+          }
+
+    }else{
+          strcpy(strtokSeperator,Separator);
+    }
     char *copy=string_cpy.charbuf;
 
     char * token;
@@ -103,7 +122,7 @@ void String_Split(struct StringList *result ,struct String *string, char* Separa
     size_t pos=token-copy;
     // loop through the string to extract all other tokens
     while( pos<  string->length ) {
-        //printf( "- %s\n", token ); //printing each token
+       // printf( "printing each token- %s\n", token ); //printing each token
         StringCharCpy(&buffer,token);
         appendto_StringList(result,&buffer);
 
