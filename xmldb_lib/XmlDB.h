@@ -109,4 +109,5 @@ struct String *Dump_DB(struct Database *DB);
 void Load_dbcontent(struct Database *DB,struct StringList *xmllines) ;
 bool IslowestNode(struct Database *DB, int nodeId);
 //struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId);
+void ReplacewithHTMLSpecialEntities(struct Database *DB,struct String* Result,struct String* input );
 #endif

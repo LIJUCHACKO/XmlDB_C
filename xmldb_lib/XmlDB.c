@@ -117,7 +117,7 @@ static  void ReplaceHTMLSpecialEntities(struct String* Result,struct String* inp
 
 }
 //libreoffice replace only &amp;  &lt; &gt;
-static void ReplacewithHTMLSpecialEntities(struct Database *DB,struct String* Result,struct String* input )
+void ReplacewithHTMLSpecialEntities(struct Database *DB,struct String* Result,struct String* input )
 {
     StringStringCpy(Result,input);
     if(!DB->libreofficemod){
@@ -1562,7 +1562,7 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
         init_StringList(&ResultSend->labelvalues,0);
         return ResultSend;
     }
-    struct String *content = GetNodeContents(DB, nodeId);
+    struct String *content = GetNodeContentsRaw(DB, nodeId);
     ReplcSubstring(content,"\n","-");//for strtok
     ReplcSubstring(content,"><",">-<");//for strtok
     if (content->length == 0) {
@@ -1620,7 +1620,7 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
     struct ResultStruct* ResultSend= replaceNodeRetainid(DB, nodeId, &result);
     if (DB->Debug_enabled ){
         printf("UpdateNodevalue :Updating node %d\n", nodeId);
-        struct String * prints=GetNodeContents(DB, nodeId);
+        struct String * prints=GetNodeContentsRaw(DB, nodeId);
         printf("%s\n",prints->charbuf );
         free_String(prints);
     }
@@ -1770,7 +1770,7 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
    // struct ResultStruct* ResultSend= replaceNodeRetainid(DB, nodeId, contentparts0);
     if (DB->Debug_enabled) {
         printf("UpdateNodevalue :Updating node %d\n", nodeId);
-        struct String* NodeContents=GetNodeContents(DB, nodeId);
+        struct String* NodeContents=GetNodeContentsRaw(DB, nodeId);
         printf("%s\n", NodeContents->charbuf);
         free_StringReturn(NodeContents);
     }
@@ -1822,6 +1822,7 @@ struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlch
         printf("replaceNode :Replacing node %d\n", nodeId);
     }
     if (!validatexml(&sub_xml)) {
+        printf("%s",sub_xml.charbuf);
         fprintf(stderr,"\n xml content is not proper- aborting replacing");
         char* error= (char*) malloc((ERRORLENGTH) * sizeof(char));
         if(error==NULL){

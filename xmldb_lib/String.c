@@ -7,6 +7,7 @@
 **
 */
 #include "String.h"
+#include <stdlib.h>
 
 
 void init_String(struct String*v,size_t size){
