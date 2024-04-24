@@ -1716,8 +1716,10 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
         ReplcSubstring(contentparts0,oldlabelvalue.charbuf,newlabelvalue.charbuf);
         free_StringReturn(oldvalue);
     } else {
-        StringCharConcat(contentparts0," ");
-        StringStringConcat(contentparts0,&newlabelvalue);
+        if(value.length>0){
+          StringCharConcat(contentparts0," ");
+          StringStringConcat(contentparts0,&newlabelvalue);
+        }
     }
     struct String contentnew;init_String(&contentnew,0);
     if (NodeWithoutValue) {
