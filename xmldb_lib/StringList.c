@@ -7,7 +7,7 @@
 **
 */
 #include "StringList.h"
-
+#include <assert.h>
 void init_StringList(struct StringList *v,size_t size){
     if(size<1){
         size=1;
@@ -66,6 +66,7 @@ void concatenate_StringList(struct StringList *dest,struct StringList* src){
 }
 
 void insertInTo_StringList(struct StringList *src_dest,size_t index,struct String* string){
+       assert(src_dest->size>index);
       memmove(src_dest->string+index+1,src_dest->string+index,(src_dest->length-index)*sizeof (struct String));
       init_String(&src_dest->string[index],string->length+1);
        StringStringCpy(&src_dest->string[index],string);

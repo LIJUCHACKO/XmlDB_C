@@ -241,14 +241,16 @@ void formatxml(struct StringList* newlines,struct StringList* lines){
         }
         StringStringConcat(&newline, &linestr);
         appendto_StringList(newlines,&newline);
-        if ((line[0]=='<') && (line[1]=='/'))  {
-            level--;
-        } else if ((line[0]=='<') && (strstr(line, "</")!=NULL)){
-            level--;
-        } else if ((line[strlen(line)-2]=='/') && (line[strlen(line)-1]=='>'))  {
-            level--;
-        } else if ((line[0]=='<') && (line[1]=='!')){
-            level--;
+        if(strlen(line)>2){
+		if ((line[0]=='<') && (line[1]=='/'))  {
+		    level--;
+		} else if ((line[0]=='<') && (strstr(line, "</")!=NULL)){
+		    level--;
+		} else if ((line[strlen(line)-2]=='/') && (line[strlen(line)-1]=='>'))  {
+		    level--;
+		} else if ((line[0]=='<') && (line[1]=='!')){
+		    level--;
+		}
         }
         free_String(&newline);
         free_String(&linestr);

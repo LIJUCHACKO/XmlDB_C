@@ -7,7 +7,7 @@
 **
 */
 #include "VectorInt.h"
-
+#include <assert.h>
 void init_VectorInt(struct VectorInt* v,size_t size){
     if(size<1){
         size=1;
@@ -67,6 +67,7 @@ void inserto_VectorInt(struct VectorInt *src_dest,size_t index,int value){
     if(src_dest->length+1>= src_dest->size){
         VectorInt_Resize( src_dest ,(src_dest->size+1)*2);
     }
+    assert(src_dest->size>index);
     int* remaining=  malloc((src_dest->length-index) * sizeof(int));
     if(remaining==NULL){
         fprintf(stderr,"\nError-Memory allocation failed");

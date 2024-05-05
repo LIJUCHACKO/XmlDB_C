@@ -7,6 +7,7 @@
 **
 */
 #include "SegmentedStringList.h"
+#include <assert.h>
 void init_SegmentedStringList(struct SegmentedStringList *v){
 
     v->Segments = malloc( 10 * sizeof(struct StringList));
@@ -64,17 +65,19 @@ void insertInTo_SegmentedStringList(struct SegmentedStringList *vect,size_t inde
             vect->length++;
             insertInTo_StringList(&vect->Segments[i], index-size,  string);
             if (vect->Segments[i].length>=2*SEGMENTLENGTH){
-                /*dividing into 2*/
+                //dividing into 2
                 vect->lastSegment++;
                 if(vect->lastSegment>= vect->NoofSegments){
                       SegmentedStringList_Resize( vect ,vect->NoofSegments*2);
                 }
-                memmove(vect->Segments+index+2, vect->Segments+i+1,(vect->lastSegment-i-1)*sizeof (struct StringList));
-                init_StringList(&vect->Segments[i+1],SEGMENTLENGTH);
-                /*copying last half contents to next i+1 from i*/
-                memmove(vect->Segments[i+1].string,vect->Segments[i].string+SEGMENTLENGTH,SEGMENTLENGTH*sizeof (struct String));
+                //vect->lastSegment already incremented
+                memmove(vect->Segments+i+2, vect->Segments+i+1,(vect->lastSegment-i-1)*sizeof (struct StringList));
+                init_StringList(&vect->Segments[i+1],SEGMENTLENGTH*2);
+                //copying last half contents to next i+1 from i
+                size_t orginal_length=vect->Segments[i].length;
+                memmove(vect->Segments[i+1].string,vect->Segments[i].string+SEGMENTLENGTH,(orginal_length-SEGMENTLENGTH)*sizeof (struct String));
                 vect->Segments[i].length=SEGMENTLENGTH;
-                vect->Segments[i+1].length=SEGMENTLENGTH;
+                vect->Segments[i+1].length=orginal_length-SEGMENTLENGTH;
 
             }
             return;
@@ -90,6 +93,7 @@ void removeFrom_SegmentedStringList(struct SegmentedStringList *vect,size_t inde
     while(i<= vect->lastSegment ){
         if((size+vect->Segments[i].length) >index){
             vect->length--;
+            //only string inside list is removed
             removeFrom_StringList(&vect->Segments[i], index-size);
             return;
         }
