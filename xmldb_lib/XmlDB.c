@@ -280,6 +280,7 @@ void free_compare_path_Result(struct compare_path_Result * v){
     free(v);
 }
 static struct compare_path_Result * compare_path(struct String* current_path ,struct String* reference_path )  {
+    //multiple /../ is not supported
     struct compare_path_Result* Result=malloc(sizeof(struct compare_path_Result));
     if(Result==NULL){
         fprintf(stderr,"\nError-Memory allocation failed");
@@ -330,9 +331,20 @@ static struct compare_path_Result * compare_path(struct String* current_path ,st
             continue;
         }
         if(strcmp(cur_pathParts.string[cur_pathPartindex].charbuf,refpathpart)==0){
-            skipoccured = false;
-            cur_pathPartindex++;
-            ref_pathPartindex++;
+
+            if(skipoccured){
+                //and also if remaining no of parts are same
+                //to handle ../<x>/node
+                // /../df/dfd/df/     /df/ df/dfdf/ d/
+                //if node names are repeating down the line
+                if( (len_cur_pathParts-cur_pathPartindex) == (len_ref_pathParts-ref_pathPartindex)){
+                    skipoccured = false;
+                    ref_pathPartindex++;
+                }
+            }else{
+                ref_pathPartindex++;
+            }
+             cur_pathPartindex++;
         } else {
             if( skipoccured ){
                 cur_pathPartindex++;
