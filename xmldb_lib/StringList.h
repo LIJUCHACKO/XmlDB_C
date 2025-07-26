@@ -10,7 +10,7 @@
 #define STRINGLIST
 #include<malloc.h>
 #include<memory.h>
-#include "string.h"
+#include <string.h>
 #include "String.h"
 struct StringList{
     size_t length;  //length of vector
