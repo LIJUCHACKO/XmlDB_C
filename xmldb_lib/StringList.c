@@ -130,7 +130,7 @@ void String_Split(struct StringList *result ,struct String *string, char* Separa
         token = strtok(NULL, strtokSeperator);
         pos=token-copy;
     }
-    free(copy);
+    free_String(&string_cpy);
     free_String(&buffer);
 }
 

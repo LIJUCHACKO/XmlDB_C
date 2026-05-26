@@ -68,26 +68,15 @@ void inserto_VectorInt(struct VectorInt *src_dest,size_t index,int value){
         VectorInt_Resize( src_dest ,(src_dest->size+1)*2);
     }
     assert(src_dest->size>index);
-    int* remaining=  malloc((src_dest->length-index) * sizeof(int));
-    if(remaining==NULL){
-        fprintf(stderr,"\nError-Memory allocation failed");
-        exit(1);
+    if(src_dest->length > index){
+        memmove(src_dest->items+index+1, src_dest->items+index, (src_dest->length-index)*sizeof(int));
     }
-    memcpy(remaining, src_dest->items+index, (src_dest->length-index)*sizeof (int));
     src_dest->items[index]=value;
-    memcpy( src_dest->items+index+1,remaining, (src_dest->length-index)*sizeof (int));
     src_dest->length++;
-    free(remaining);
 }
 void removefrom_VectorInt(struct VectorInt *src_dest,size_t index){
-
-    int* remaining= malloc((src_dest->length-index-1) * sizeof(int));
-    if(remaining==NULL){
-        fprintf(stderr,"\nError-Memory allocation failed");
-        exit(1);
+    if(index < src_dest->length - 1){
+        memmove(src_dest->items+index, src_dest->items+index+1, (src_dest->length-index-1)*sizeof(int));
     }
-    memcpy(remaining, src_dest->items+index+1, (src_dest->length-index-1)*sizeof (int));
-    memcpy( src_dest->items+index,remaining, (src_dest->length-index-1)*sizeof (int));
     src_dest->length--;
-    free(remaining);
 }

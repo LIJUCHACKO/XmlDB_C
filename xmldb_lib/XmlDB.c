@@ -257,6 +257,7 @@ void formatxml(struct StringList* newlines,struct StringList* lines){
     }
 }
 void free_DB(struct Database* DB){
+    pthread_rwlock_destroy(&DB->rwlock);
     free_String(&DB->removeattribute);
     free_String(&DB->path);
 
@@ -485,12 +486,11 @@ static void updateNodenoLineMap(struct Database *DB ,int fromLine ) {
 
         lineno++;
     }
-    DB->WriteLock = false;
+    pthread_rwlock_unlock(&DB->rwlock);
 }
 int NodeLine(struct Database *DB, int nodeId )  {
-    while( DB->WriteLock ){
-        fprintf(stderr,"Waiting for WriteLock-NodeLine\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     int lineno = DB->nodeNoToLineno.items[nodeId];
     if (lineno < 0 ){
         fprintf(stderr,"NodeLine-:Warning :node  doesnot exist-%d\n",nodeId);
@@ -499,9 +499,8 @@ int NodeLine(struct Database *DB, int nodeId )  {
     return lineno;
 }
 int NodeEnd(struct Database *DB, int nodeId )  {
-    while(DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-NodeEnd\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     int lineno = DB->nodeNoToLineno.items[nodeId];
     if (lineno < 0) {
         fprintf(stderr,"NodeEnd-:Warning :node  doesnot exist-%d\n",nodeId);
@@ -642,7 +641,7 @@ static int fill_DBdata(struct Database *DB, struct String* dbline,struct String*
 
 static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct String* contentStr )  {
 
-    DB->WriteLock = true;
+    pthread_rwlock_wrlock(&DB->rwlock);
     struct String nodeStart;init_String(&nodeStart,0);
     struct String attributebuffer;init_String(&attributebuffer,0);
     struct String valuebuffer ;init_String(&valuebuffer,0);
@@ -1003,6 +1002,7 @@ struct Database* init_Database(int maxNoofLines){
     DB->global_lineLastUniqueid = 0;
     init_String(&DB->path,0);
     init_String(&DB->removeattribute,0);
+    pthread_rwlock_init(&DB->rwlock, NULL);
     return DB;
 }
 
@@ -1040,9 +1040,8 @@ static void load_xmlstring(struct Database *DB ,struct String* content ) {
 
 }
 bool SaveAs_DB(struct Database *DB, char *filename ) {
-    while( DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-Save_DB\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
 
     bool status= writeLines(DB, filename);
     if (!status) {
@@ -1052,9 +1051,8 @@ bool SaveAs_DB(struct Database *DB, char *filename ) {
     return status;
 }
 bool Save_DB(struct Database *DB) {
-    while( DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-Save_DB\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     if (strlen(DB->filename) == 0) {
         fprintf(stderr,"Filename not specified\n");
         return false;
@@ -1110,9 +1108,8 @@ struct String* GetNodeAttribute(struct Database *DB ,int nodeId ,char* labelchar
         exit(1);
     }
     init_String(content,0);
-    while( DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-GetNodeAttribute\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     int LineNo = DB->nodeNoToLineno.items[nodeId];
     if (LineNo < 0 ){
         fprintf(stderr,"Warning :node  doesnot exist\n");
@@ -1148,9 +1145,8 @@ struct String *GetNodeValue(struct Database *DB ,int nodeId)  {
         exit(1);
     }
     init_String(content,0);
-    while( DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-GetNodeValue\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     int lineno = DB->nodeNoToLineno.items[nodeId];
     if (lineno < 0) {
         fprintf(stderr,"Warning :node  doesnot exist\n");
@@ -1172,9 +1168,8 @@ struct String * GetNodeName(struct Database *DB, int nodeId )  {
         exit(1);
     }
     init_String(content,0);
-    while( DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-GetNodeName\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     int lineno = DB->nodeNoToLineno.items[nodeId];
     if (lineno < 0) {
         fprintf(stderr,"Warning :node  doesnot exist\n");
@@ -1187,9 +1182,8 @@ struct String * GetNodeName(struct Database *DB, int nodeId )  {
     return content;
 }
 struct String * GetNodeContentsRaw(struct Database *DB, int nodeId )  {
-    while( DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-GetNodeContents\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     struct String* Output=malloc(sizeof (struct String));
     if(Output==NULL){
         fprintf(stderr,"\nError-Memory allocation failed");
@@ -1221,9 +1215,8 @@ struct String * GetNodeContentsRaw(struct Database *DB, int nodeId )  {
     return Output;
 }
 struct String * GetNodeContents(struct Database *DB, int nodeId )  {
-    while( DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-GetNodeContents\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     struct String* Output=malloc(sizeof (struct String));
     if(Output==NULL){
         fprintf(stderr,"\nError-Memory allocation failed");
@@ -1266,9 +1259,8 @@ struct String * GetNodeContents(struct Database *DB, int nodeId )  {
 }
 
 void NodeDebug(struct Database *DB, int nodeId )  {
-    while( DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-GetNodeContents\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
 
     int beginning = NodeLine(DB, nodeId);
     if (beginning < 0) {
@@ -1425,7 +1417,7 @@ static void remove_Node(struct VectorInt *removedids, struct Database *DB, int n
     int end = NodeEnd(DB, nodeId);
 
     DB->startindex = startindex;
-    DB->WriteLock = true;
+    pthread_rwlock_wrlock(&DB->rwlock);
     for (int i = startindex; i < end; i++ ){
         struct String *path = Valueat(&DB->global_paths,startindex);//do not free
         struct StringList path_parts;init_StringList(&path_parts,0);
@@ -1645,9 +1637,8 @@ static struct ResultStruct * update_nodevalue(struct Database *DB, int nodeId,st
 struct ResultStruct *UpdateNodevalue(struct Database *DB, int nodeId,char* new_valuechar )  {
     struct String new_value;init_String(&new_value,0);
     StringCharCpy(&new_value,new_valuechar);
-    while( DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-UpdateNodevalue\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
 
     struct String Result;init_String(&Result,0);
     ReplacewithHTMLSpecialEntities(DB,&Result,&new_value);
@@ -1662,9 +1653,8 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     struct String value;init_String(&value,0);
     StringCharCpy(&value,valuechar);
     TrimSpaceString(&value);
-    while( DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-UpdateAttributevalue\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     int beginning = NodeLine(DB, nodeId);
     struct String* content = Valueat(&DB->global_dbLines,beginning);//donot free
     bool NodeWithoutValue=false;
@@ -1812,9 +1802,8 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     return ResultSend;
 }
 struct VectorInt* RemoveNode(struct Database *DB, int nodeId) {
-    while(DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-RemoveNode\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
 
     struct VectorInt *nodes = malloc(sizeof(struct VectorInt));
     if(nodes==NULL){
@@ -1830,9 +1819,8 @@ struct VectorInt* RemoveNode(struct Database *DB, int nodeId) {
 struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlchar ) {
     struct String sub_xml;init_String(&sub_xml,0);
     StringCharCpy(&sub_xml,sub_xmlchar);
-    while(DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-ReplaceNode\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
 
     if (DB->Debug_enabled) {
         printf("replaceNode :Replacing node %d\n", nodeId);
@@ -1914,9 +1902,8 @@ bool IslowestNode(struct Database *DB, int nodeId){
 struct ResultStruct * InserSubNode(struct Database *DB, int nodeId,char* sub_xmlchar ) {
     struct String sub_xml;init_String(&sub_xml,0);
     StringCharCpy(&sub_xml,sub_xmlchar);
-    while(DB->WriteLock) {
-        printf("Waiting for WriteLock-InserSubNode\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
 
     if (!validatexml(&sub_xml) ){
         fprintf(stderr,"\n xml content is not proper- aborting InserSubNode");
@@ -1972,9 +1959,8 @@ struct ResultStruct * InserSubNode(struct Database *DB, int nodeId,char* sub_xml
 struct ResultStruct * AppendAfterNode(struct Database *DB, int nodeId,char* sub_xmlchar ) {
     struct String sub_xml;init_String(&sub_xml,0);
     StringCharCpy(&sub_xml,sub_xmlchar);
-    while(DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-AppendAfterNode\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
 
     if (!validatexml(&sub_xml) ){
         fprintf(stderr,"\nError : xml content is not proper- aborting AppendAfterNode");
@@ -2023,9 +2009,8 @@ struct ResultStruct * AppendAfterNode(struct Database *DB, int nodeId,char* sub_
 struct ResultStruct * AppendBeforeNode(struct Database *DB, int nodeId,char* sub_xmlchar )  {
     struct String sub_xml;init_String(&sub_xml,0);
     StringCharCpy(&sub_xml,sub_xmlchar);
-    while(DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-AppendBeforeNode\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
 
     if (!validatexml(&sub_xml) ){
         fprintf(stderr,"\n xml content is not proper- aborting AppendBeforeNode");
@@ -2329,9 +2314,8 @@ static struct  ResultStruct *locateNodeLine(struct Database *DB,int parent_nodeL
     return ResultSend;
 }
 int ParentNode(struct Database *DB,int nodeId)  {
-    while( DB->WriteLock ){
-        fprintf(stderr,"Waiting for WriteLock-ParentNode\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     int LineNo = DB->nodeNoToLineno.items[nodeId];
     int ResultId = -1;
     if (nodeId < 0) {
@@ -2360,9 +2344,8 @@ struct VectorInt *ChildNodes(struct Database *DB,int nodeId) {
         exit(1);
     }
     init_VectorInt(ResultIds,0);
-    while( DB->WriteLock ){
-        fprintf(stderr,"Waiting for WriteLock-ChildNodes\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     int LineNo = DB->nodeNoToLineno.items[nodeId];
     if (nodeId < 0) {
             return ResultIds;
@@ -2512,9 +2495,8 @@ struct  ResultStruct * GetNode(struct Database *DB,int parent_nodeId , char*  QU
     init_StringList(&ResultSend->labelvalues,0);
     ResultSend->Error=NULL;
     // ldld/dkdicmk*/<xe>/kjk[]/lkl
-    while( DB->WriteLock ){
-        fprintf(stderr,"Waiting for WriteLock-GetNode\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     if (DB->Debug_enabled ){
 
         printf("\n==Process Query===\n");
@@ -2667,9 +2649,8 @@ struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  
         fprintf(stderr,"\nError-Memory allocation failed");
         exit(1);
     }
-    while(DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-CutPasteAsSubNode\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     int previousparentid = ParentNode(DB, nodeId);
     if (previousparentid == -1 ){
         fprintf(stderr,"\nNode doesnot exists");
@@ -2689,7 +2670,7 @@ struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  
     struct StringList DB_global_paths; init_StringList(&DB_global_paths,0);
     struct StringList DB_global_values; init_StringList(&DB_global_values,0);
     struct StringList DB_global_attributes; init_StringList(&DB_global_attributes,0);
-    DB->WriteLock = true;
+    pthread_rwlock_wrlock(&DB->rwlock);
     while( Line < end ){
         appendto_VectorInt(&DB_global_ids, DB->global_ids.items[startindex]);
         removefrom_VectorInt(&DB->global_ids, startindex);
@@ -2752,7 +2733,7 @@ struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  
     if (NewParentNodeisEmpty) {
         insertLine++;
     }
-    DB->WriteLock = true;
+    pthread_rwlock_wrlock(&DB->rwlock);
     while( Line < (int) DB_global_dbLines.length) {
 
         //DB->path = newparentpath + strings.ReplaceAll(DB_global_paths[Line], previousparentpath, "")
@@ -2825,9 +2806,8 @@ void free_Attributes(struct ResultAttributes *v){
     free(v);
 }
 struct ResultAttributes* GetAllNodeAttributes(struct Database *DB,int nodeId)  {
-    while( DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-GetNodeAttribute\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     struct ResultAttributes* Attributes= malloc(sizeof(struct ResultStruct));
     if(Attributes==NULL){
         fprintf(stderr,"\nError-Memory allocation failed");
@@ -2869,9 +2849,8 @@ struct String* MergeNodes(struct Database *DB,int fromNodeId,int toNodeId) {
         fprintf(stderr,"\nError-Memory allocation failed");
         exit(1);
     }
-    while(DB->WriteLock) {
-        fprintf(stderr,"Waiting for WriteLock-MergeNodes\n");
-    }
+    pthread_rwlock_rdlock(&DB->rwlock);
+    pthread_rwlock_unlock(&DB->rwlock);
     struct ResultAttributes* labelsvalues1 = GetAllNodeAttributes(DB, fromNodeId);
     struct ResultAttributes* labelsvalues2 = GetAllNodeAttributes(DB, fromNodeId);
 

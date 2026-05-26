@@ -24,6 +24,8 @@
 #include<regex.h>
 #endif
 #include "SegmentedStringList.h"
+#include <pthread.h>
+#include <semaphore.h>
 
 #define ERRORLENGTH 2000
 struct ResultStruct {
@@ -71,7 +73,7 @@ struct Database  {
     struct String path;
     int maxInt;
     int maxHashValue;
-    bool WriteLock;
+    pthread_rwlock_t rwlock;
 };
 struct VectorInt* Get_common(struct VectorInt* set1 ,struct VectorInt*  set2 );
 void formatxml(struct StringList* newlines,struct StringList* lines);
