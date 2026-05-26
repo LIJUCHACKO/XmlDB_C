@@ -486,7 +486,6 @@ static void updateNodenoLineMap(struct Database *DB ,int fromLine ) {
 
         lineno++;
     }
-    pthread_rwlock_unlock(&DB->rwlock);
 }
 int NodeLine(struct Database *DB, int nodeId )  {
     pthread_rwlock_rdlock(&DB->rwlock);
@@ -971,6 +970,7 @@ static void parseAndLoadXml(struct VectorInt *nodes,struct Database *DB ,struct 
     free_String(&attributebuffer);
     free_String(&valuebuffer);
     free_String(&NodeName);
+    pthread_rwlock_unlock(&DB->rwlock);
 }
 
 /*memory allocation is also done for you*/
@@ -1017,8 +1017,9 @@ static void load_xmlstring(struct Database *DB ,struct String* content ) {
         printf("load_db : over\n");
     }
 
+    pthread_rwlock_wrlock(&DB->rwlock);
     updateNodenoLineMap(DB, 0);
-    //fmt.Println(DB->global_ids)
+    pthread_rwlock_unlock(&DB->rwlock);
     if (DB->Debug_enabled ){
         printf("load_db :xml db loaded\n No of nodes-%d\n", DB->global_lineLastUniqueid);
 
@@ -1437,7 +1438,7 @@ static void remove_Node(struct VectorInt *removedids, struct Database *DB, int n
         removeFrom_SegmentedStringList(&DB->global_attributes,startindex);
         free_StringList(&path_parts);
     }
-
+    pthread_rwlock_unlock(&DB->rwlock);
 }
 
 
@@ -1495,7 +1496,9 @@ static struct ResultStruct * insertAtLine(struct Database *DB, int lineno,struct
     //printf("path-%s,sub_xml-%s",DB->path,sub_xml);
     parseAndLoadXml(&ResultSend->nodeids,DB, sub_xml);
     ResultSend->Error=NULL;
+    pthread_rwlock_wrlock(&DB->rwlock);
     updateNodenoLineMap(DB, startindex_tmp-1);
+    pthread_rwlock_unlock(&DB->rwlock);
     DB->startindex = -1;
 
     return ResultSend;
@@ -1802,9 +1805,6 @@ struct ResultStruct * UpdateAttributevalue(struct Database *DB, int nodeId,char*
     return ResultSend;
 }
 struct VectorInt* RemoveNode(struct Database *DB, int nodeId) {
-    pthread_rwlock_rdlock(&DB->rwlock);
-    pthread_rwlock_unlock(&DB->rwlock);
-
     struct VectorInt *nodes = malloc(sizeof(struct VectorInt));
     if(nodes==NULL){
         fprintf(stderr,"\nError-Memory allocation failed");
@@ -1813,7 +1813,9 @@ struct VectorInt* RemoveNode(struct Database *DB, int nodeId) {
     init_VectorInt(nodes,0);
     remove_Node(nodes,DB, nodeId);
 
+    pthread_rwlock_wrlock(&DB->rwlock);
     updateNodenoLineMap(DB, DB->startindex);
+    pthread_rwlock_unlock(&DB->rwlock);
     return nodes;
 }
 struct ResultStruct *ReplaceNode(struct Database *DB, int nodeId,char* sub_xmlchar ) {
