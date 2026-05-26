@@ -1,3 +1,0 @@
-/home/runner/work/XmlDB_C/XmlDB_C/build/CMakeFiles/example.dir
-/home/runner/work/XmlDB_C/XmlDB_C/build/CMakeFiles/edit_cache.dir
-/home/runner/work/XmlDB_C/XmlDB_C/build/CMakeFiles/rebuild_cache.dir

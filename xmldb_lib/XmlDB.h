@@ -25,7 +25,6 @@
 #endif
 #include "SegmentedStringList.h"
 #include <pthread.h>
-#include <semaphore.h>
 
 #define ERRORLENGTH 2000
 struct ResultStruct {
