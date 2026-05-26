@@ -2735,7 +2735,7 @@ struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  
     if (NewParentNodeisEmpty) {
         insertLine++;
     }
-    pthread_rwlock_wrlock(&DB->rwlock);
+    //pthread_rwlock_wrlock(&DB->rwlock);
     while( Line < (int) DB_global_dbLines.length) {
 
         //DB->path = newparentpath + strings.ReplaceAll(DB_global_paths[Line], previousparentpath, "")
@@ -2795,7 +2795,7 @@ struct String*  CutPasteAsSubNode(struct Database *DB ,int UnderId,int nodeId)  
     free_String(&newparentpath);
     free_StringReturn(NewParentNodename);
     updateNodenoLineMap(DB, 0);
-
+    pthread_rwlock_unlock(&DB->rwlock);
     DB->startindex = -1;
     free(Error->charbuf);
     Error->charbuf=NULL;
